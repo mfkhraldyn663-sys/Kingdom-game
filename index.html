@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏰 مملكة - النسخة الكاملة</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+  body { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); min-height: 100vh; color: #fff; padding: 16px; padding-bottom: 90px; }
+  .container { max-width: 500px; margin: 0 auto; }
+  .header { text-align: center; margin-bottom: 20px; position: relative; }
+  .header h1 { font-size: 26px; background: linear-gradient(90deg, #f59e0b, #ec4899, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .header p { font-size: 13px; color: #a78bfa; margin-top: 4px; }
+  
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  .stat { background: rgba(255,255,255,0.05); border: 1px solid rgba(167,139,250,0.3); border-radius: 10px; padding: 10px; text-align: center; }
+  .stat-label { font-size: 10px; color: #a78bfa; margin-bottom: 4px; }
+  .stat-value { font-size: 15px; font-weight: bold; }
+  .gold { color: #fbbf24; } .power { color: #ef4444; } .vault { color: #10b981; } .lvl { color: #a3e635; } .exp { color: #22d3ee; } .wood { color: #d97706; }
+  
+  .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(167,139,250,0.3); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+  .card h3 { font-size: 15px; color: #c4b5fd; margin-bottom: 10px; }
+  .btn { width: 100%; padding: 12px; border: none; border-radius: 10px; font-size: 14px; font-weight: bold; cursor: pointer; color: #fff; margin-bottom: 8px; transition: 0.2s; }
+  .btn:active { transform: scale(0.97); }
+  .btn-red { background: #dc2626; } .btn-blue { background: #2563eb; } .btn-green { background: #16a34a; } .btn-purple { background: #9333ea; } .btn-gold { background: #d97706; }
+  
+  .tabs { display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tab { flex: 1; min-width: 30%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(167,139,250,0.2); border-radius: 10px; text-align: center; font-size: 12px; cursor: pointer; color: #c4b5fd; }
+  .tab.active { background: #8b5cf6; color: #fff; border-color: #8b5cf6; }
+
+  .admin-panel { border: 2px dashed #ef4444; background: rgba(220, 38, 38, 0.1); display: none; margin-bottom: 16px; }
+  .admin-panel input { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: none; color: #000; text-align: center; }
+  .monster-box { text-align: center; padding: 15px; background: rgba(220, 38, 38, 0.1); border-radius: 12px; margin-bottom: 12px; border: 2px dashed rgba(239, 68, 68, 0.5); }
+  .monster-emoji { font-size: 80px; display: block; margin: 0 auto; }
+  
+  .farm-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+  .plot { background: rgba(0,0,0,0.4); border: 1px solid #4ade80; border-radius: 8px; height: 60px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 10px; cursor: pointer; }
+  .plot.empty { border-color: #6b7280; color: #6b7280; }
+  .plot.ready { background: rgba(74, 222, 128, 0.2); border-color: #4ade80; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🏰 مملكة</h1>
+    <p id="kingdomName">مملكة الفجر</p>
+    <button onclick="toggleAdmin()" style="position:absolute; left:0; top:0; background:none; border:none; color:#4b5563; font-size:20px; cursor:pointer;">⚙️</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-label">💰 الذهب</div><div class="stat-value gold" id="gold">0</div></div>
+    <div class="stat"><div class="stat-label">🏦 البنك</div><div class="stat-value vault" id="vault">0</div></div>
+    <div class="stat"><div class="stat-label">⚔️ القوة</div><div class="stat-value power" id="power">0</div></div>
+    <div class="stat"><div class="stat-label">📈 المستوى</div><div class="stat-value lvl" id="level">1</div></div>
+    <div class="stat"><div class="stat-label">⭐ الخبرة</div><div class="stat-value exp" id="exp">0</div></div>
+    <div class="stat"><div class="stat-label">🪵 خشب</div><div class="stat-value wood" id="wood">0</div></div>
+  </div>
+
+  <div id="adminPanel" class="card admin-panel">
+    <h3>👑 لوحة المطور</h3>
+    <input type="number" id="adminAmount" placeholder="أدخل المبلغ (مثلاً 100000)">
+    <button class="btn btn-green" onclick="adminAdd('gold')">💰 إضافة فلوس</button>
+    <button class="btn btn-red" onclick="adminAdd('power')">⚔️ إضافة قوة</button>
+    <button class="btn btn-purple" onclick="adminAdd('level')">📈 إضافة مستوى</button>
+    <button class="btn btn-gold" onclick="adminAdd('wood')">🪵 إضافة خشب</button>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('battle', this)">⚔️ معارك</div>
+    <div class="tab" onclick="showTab('heroes', this)">🛡️ أبطال</div>
+    <div class="tab" onclick="showTab('farm', this)">🌾 مزرعة</div>
+    <div class="tab" onclick="showTab('shop', this)">🏪 متجر</div>
+  </div>
+
+  <div id="tab-battle">
+    <div class="card">
+      <h3>🐾 قتال الوحوش (1-100)</h3>
+      <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+        <button class="btn btn-blue" style="width:30%;" onclick="changeLevel(-1)">-</button>
+        <span id="monsterLevelDisplay" style="font-size:18px; font-weight:bold; padding-top:10px;">مستوى 1</span>
+        <button class="btn btn-blue" style="width:30%;" onclick="changeLevel(1)">+</button>
+      </div>
+      <div class="monster-box"><span class="monster-emoji" id="monsterEmoji">👹</span></div>
+      <button class="btn btn-red" onclick="hunt()">اهجم على الوحش</button>
+    </div>
+    <div class="card">
+      <h3>⛰️ الكهوف</h3>
+      <button class="btn btn-green" onclick="cave()">استكشف كهف (قوة تلقائية)</button>
+    </div>
+  </div>
+
+  <div id="tab-heroes" style="display:none;">
+    <div class="card">
+      <h3>🛡️ أبطالك</h3>
+      <div id="heroList" style="font-size:13px; margin-bottom:10px;"></div>
+      <button class="btn btn-cyan" onclick="buyHero()">🛒 تجنيد بطل عشوائي (50,000$)</button>
+    </div>
+  </div>
+
+  <div id="tab-farm" style="display:none;">
+    <div class="card">
+      <h3>🌾 المزرعة</h3>
+      <div class="farm-grid" id="farmGrid"></div>
+      <button class="btn btn-green" style="margin-top:10px;" onclick="harvestAll()">🧺 حصاد الكل</button>
+    </div>
+  </div>
+
+  <div id="tab-shop" style="display:none;">
+    <div class="card">
+      <h3>🏦 البنك</h3>
+      <button class="btn btn-green" onclick="deposit()">📥 إيداع الكل</button>
+      <button class="btn btn-gold" onclick="withdraw()">📤 سحب الكل</button>
+    </div>
+    <div class="card">
+      <h3>⚔️ الترسانة</h3>
+      <button class="btn btn-purple" onclick="buyItem('سيف', 10000, 1500)">🗡️ سيف (+1,500) - 10,000$</button>
+      <button class="btn btn-purple" onclick="buyItem('قوس', 25000, 4000)">🏹 قوس (+4,000) - 25,000$</button>
+      <button class="btn btn-purple" onclick="buyItem('فأس', 50000, 10000)">🪓 فأس (+10,000) - 50,000$</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const HERO_DB = [
+  { id: 'h1', name: 'بيلا', rank: 'عادي', role: 'مهاجم', element: 'نار' },
+  { id: 'h2', name: 'كورين', rank: 'عادي', role: 'مدافع', element: 'ماء' },
+  { id: 'outa', name: 'أوتا', rank: 'لا يقهر', role: 'مهاجم', element: 'فراغ' },
+  { id: 'maro', name: 'مارو', rank: 'لا يقهر', role: 'ساحر', element: 'نور' }
+];
+const ROLE_EMOJI = { 'مهاجم': '🗡️', 'مدافع': '🛡️', 'رامي': '🏹', 'قاتل': '🪓', 'ساحر': '🔮' };
+const RANK_MULT = { 'عادي': 1.0, 'مميز': 1.4, 'خارق': 2.0, 'أسطورة': 2.8, 'لا يقهر': 4.0 };
+const ROLE_BASE = { 'مهاجم': [50000, 60000], 'مدافع': [100000, 30000], 'رامي': [40000, 80000], 'قاتل': [25000, 110000], 'ساحر': [30000, 100000] };
+
+let state = JSON.parse(localStorage.getItem('kingdom_save_v3')) || {
+    name: 'مملكة ' + ['الفجر','الظلام','الأساطير'][Math.floor(Math.random()*3)],
+    gold: 50000, vault: 0, power: 10000, level: 1, exp: 0, wood: 0,
+    heroes: [{ ...HERO_DB[0], level: 1, active: true }],
+    farm: Array(8).fill(null)
+};
+let selectedLevel = 1;
+
+function save() { localStorage.setItem('kingdom_save_v3', JSON.stringify(state)); render(); }
+
+function heroStats(h, lvl = h.level) {
+  const base = ROLE_BASE[h.role] || [50000, 50000];
+  const mult = RANK_MULT[h.rank] || 1;
+  const lvlMult = 1 + (Math.min(lvl, 50) - 1) * 0.15;
+  return { hp: Math.floor(base[0] * lvlMult * mult), atk: Math.floor(base[1] * lvlMult * mult) };
+}
+
+function playerPower() {
+  let atk = state.power;
+  for (const h of state.heroes.filter(h => h.active)) atk += heroStats(h).atk;
+  return Math.floor(atk);
+}
+
+function monsterPower(level) {
+  const L = Math.max(1, Math.min(100, level));
+  const p10 = 60000 * Math.pow(1.5, 9);
+  return Math.floor(L <= 10 ? 60000 * Math.pow(1.5, L - 1) : p10 * Math.pow(1.3, L - 10));
+}
+
+function render() {
+  document.getElementById('kingdomName').innerText = state.name;
+  document.getElementById('gold').innerText = Math.floor(state.gold).toLocaleString('en-US');
+  document.getElementById('vault').innerText = Math.floor(state.vault).toLocaleString('en-US');
+  document.getElementById('power').innerText = playerPower().toLocaleString('en-US');
+  document.getElementById('level').innerText = state.level;
+  document.getElementById('exp').innerText = state.exp;
+  document.getElementById('wood').innerText = state.wood;
+  document.getElementById('monsterLevelDisplay').innerText = `مستوى ${selectedLevel}`;
+  
+  const list = document.getElementById('heroList');
+  if (list) {
+    list.innerHTML = '';
+    state.heroes.forEach(h => {
+      list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:5px; border-bottom:1px solid #333;">
+        <span>${h.active ? '⭐' : '💤'} ${ROLE_EMOJI[h.role]} ${h.name} (لفل ${h.level})</span>
+        <span style="color:#ef4444;">${heroStats(h).atk.toLocaleString()}</span>
+      </div>`;
+    });
+  }
+  renderFarm();
+}
+
+function renderFarm() {
+  const grid = document.getElementById('farmGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  const now = Date.now();
+  for (let i = 0; i < 8; i++) {
+    const plotData = state.farm[i];
+    const div = document.createElement('div');
+    div.className = 'plot';
+    if (!plotData) {
+      div.classList.add('empty'); div.innerHTML = `➕`;
+      div.onclick = () => { state.farm[i] = { readyAt: Date.now() + 60000 }; save(); };
+    } else if (now >= plotData.readyAt) {
+      div.classList.add('ready'); div.innerHTML = `🌲`;
+      div.onclick = () => { state.wood += 50; state.farm[i] = null; save(); alert('حصدت 50 خشب!'); };
+    } else {
+      div.innerHTML = `🌱 ${Math.ceil((plotData.readyAt - now)/1000)}ث`;
+    }
+    grid.appendChild(div);
+  }
+}
+
+function showTab(name, btn) {
+  ['battle', 'heroes', 'farm', 'shop'].forEach(t => document.getElementById('tab-' + t).style.display = 'none');
+  document.getElementById('tab-' + name).style.display = 'block';
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function changeLevel(amount) {
+  selectedLevel = Math.max(1, Math.min(100, selectedLevel + amount));
+  render();
+}
+
+function hunt() {
+  const my = playerPower();
+  const mp = monsterPower(selectedLevel);
+  if (my >= mp) {
+    const gold = selectedLevel * 20000;
+    const exp = 20 + 5 * (selectedLevel - 1);
+    state.gold += gold; state.exp += exp;
+    if (state.exp >= state.level * 100) { state.exp -= state.level * 100; state.level++; alert(`🏆 انتصرت! +${gold}$ +${exp} خبرة\n📈 ترقيت للمستوى ${state.level}!`); }
+    else alert(`🏆 انتصرت! +${gold}$ +${exp} خبرة`);
+    save();
+  } else alert(`💥 هزمك الوحش! قوتك (${my}) أقل من (${mp})`);
+}
+
+function cave() {
+  const my = playerPower();
+  let bestLvl = 1;
+  for (let i = 1; i <= 100; i++) { if (monsterPower(i) * 0.8 <= my) bestLvl = i; else break; }
+  const cp = monsterPower(bestLvl) * 0.8;
+  if (my >= cp) {
+    const gold = bestLvl * 20000 * 1.5;
+    state.gold += gold; state.wood += bestLvl * 10;
+    alert(`⛰️ طهّرت كهف مستوى ${bestLvl}! +${gold}$ +${bestLvl*10} خشب`);
+    save();
+  } else alert('💀 الكهف صعب جداً!');
+}
+
+function buyHero() {
+  if (state.gold < 50000) return alert('💸 تحتاج 50,000$');
+  const available = HERO_DB.filter(h => !state.heroes.some(x => x.id === h.id));
+  if (!available.length) return alert('❌ تملك كل الأبطال!');
+  state.gold -= 50000;
+  const newHero = { ...available[Math.floor(Math.random() * available.length)], level: 1, active: true };
+  state.heroes.push(newHero);
+  save(); alert(`🎉 جنّدت: ${newHero.name}!`);
+}
+
+function buyItem(name, price, power) {
+  if (state.gold < price) return alert('💸 ما عندك فلوس كفاية!');
+  state.gold -= price; state.power += power; save();
+  alert(`🛒 اشتريت ${name}! (+${power} قوة)`);
+}
+
+function harvestAll() {
+  let wood = 0, now = Date.now();
+  for (let i = 0; i < 8; i++) {
+    if (state.farm[i] && now >= state.farm[i].readyAt) { wood += 50; state.farm[i] = null; }
+  }
+  if (wood === 0) return alert('لا يوجد شيء جاهز!');
+  state.wood += wood; save(); alert(`🧺 حصدت ${wood} خشب!`);
+}
+
+function deposit() { if (state.gold <= 0) return alert('ما عندك فلوس!'); state.vault += state.gold; state.gold = 0; save(); }
+function withdraw() { if (state.vault <= 0) return alert('البنك فاضي!'); state.gold += state.vault; state.vault = 0; save(); }
+
+function toggleAdmin() {
+  const panel = document.getElementById('adminPanel');
+  if (panel.style.display === 'block') panel.style.display = 'none';
+  else {
+    const pass = prompt("أدخل كلمة سر المطور:");
+    if (pass === "admin123") panel.style.display = 'block';
+    else alert("❌ كلمة السر خاطئة!");
+  }
+}
+
+function adminAdd(type) {
+  const amount = parseInt(document.getElementById('adminAmount').value);
+  if (isNaN(amount) || amount <= 0) return alert('أدخل مبلغ صحيح');
+  if (type === 'gold') state.gold += amount;
+  if (type === 'power') state.power += amount;
+  if (type === 'level') state.level += amount;
+  if (type === 'wood') state.wood += amount;
+  save(); alert('👑 تم التعديل بنجاح!');
+}
+
+setInterval(renderFarm, 1000);
+render();
+</script>
+</body>
+</html>
