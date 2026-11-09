@@ -257,5 +257,102 @@ function frame(t){if(battle)battleScene(t);else village(t);
  requestAnimationFrame(frame)}
 requestAnimationFrame(frame);setInterval(hud,4000);hud();net();
 </script>
+<script>
+/* ===== طبقة الرسومات ===== */
+(function(){'use strict';
+const AS='assets/',IM={};
+const ld=(k,s)=>{const i=new Image();i.onload=()=>{IM[k]=i};i.src=s};
+ld('day',AS+'bg_day.jpg');ld('night',AS+'bg_night.jpg');ld('battle',AS+'battle.jpg');
+HER.forEach(h=>ld('h_'+h[0],AS+'heroes/'+h[0]+'.png'));
+MT.forEach((m,i)=>ld('e'+m[0],AS+'monsters/'+i+'.png'));
+ld('e☠️',AS+'monsters/10.png');ld('e🏰',AS+'monsters/11.png');ld('e🤖',AS+'monsters/12.png');
+CAVES.forEach((c,i)=>ld('e'+c[1],AS+'caves/'+i+'.png'));
+TOW.forEach((t,i)=>ld('e'+t[1],AS+'towers/'+i+'.png'));
+
+/* مواقع المباني على الصورة (نسب 0-1) */
+const P={castle:[.5,.5],cave:[.12,.55],tower:[.91,.45],farm:[.29,.64],lumber:[.74,.72],mine:[.4,.84],hunt:[.16,.8],shop:[.62,.8]};
+try{Object.assign(P,JSON.parse(localStorage.getItem('kd_pos')))}catch(e){}
+const NM={castle:'القلعة',cave:'الكهوف',tower:'الأبراج',farm:'المزرعة',lumber:'الغابة',mine:'المنجم',hunt:'صيد الوحوش',shop:'السوق'};
+
+const lay=img=>{const s=Math.max(W_/img.width,H_/img.height),w=img.width*s,h=img.height*s;return{x:(W_-w)/2,y:(H_-h)/2,w,h}};
+function place(L){for(const h of HIT){const p=P[h[0]];if(!p)continue;h[1]=(L.x+p[0]*L.w)/W_;h[2]=(L.y+p[1]*L.h)/H_}
+ for(const k in BLD){const h=HIT.find(x=>x[0]===k);BLD[k].x=h[1];BLD[k].y=h[2]}}
+
+/* القرية */
+const oldV=window.village;
+window.village=function(t){
+ const dI=IM.day||IM.night;if(!dI)return oldV(t);
+ const T=(Date.now()/1000%200)/200,hh=Math.sin((T-.25)*2*Math.PI),day=clamp(hh*1.7+.35,0,1),n=1-day,u=Math.min(W_,H_);
+ const L=lay(dI);place(L);
+ cx.fillStyle='#000';cx.fillRect(0,0,W_,H_);cx.drawImage(dI,L.x,L.y,L.w,L.h);
+ if(IM.night&&IM.night!==dI){const Ln=lay(IM.night);cx.globalAlpha=n;cx.drawImage(IM.night,Ln.x,Ln.y,Ln.w,Ln.h);cx.globalAlpha=1}
+ else if(!IM.night&&n>.02){cx.fillStyle=`rgba(8,16,48,${.55*n})`;cx.fillRect(0,0,W_,H_)}
+ const dk=Math.max(0,1-Math.abs(hh)*4);if(dk>0){cx.fillStyle=`rgba(255,130,50,${.18*dk})`;cx.fillRect(0,0,W_,H_)}
+ /* أشعة شمس */
+ if(day>.3)for(let i=0;i<3;i++){const x=W_*(.15+i*.3)+Math.sin(t/4000+i)*30,g=cx.createLinearGradient(x,0,x+u*.5,H_);g.addColorStop(0,`rgba(255,240,190,${.12*day})`);g.addColorStop(1,'rgba(255,240,190,0)');cx.fillStyle=g;cx.beginPath();cx.moveTo(x,0);cx.lineTo(x+u*.25,0);cx.lineTo(x+u*.9,H_);cx.lineTo(x+u*.55,H_);cx.fill()}
+ /* دخان المدخنة */
+ const fh=HIT.find(x=>x[0]==='farm');
+ for(let i=0;i<6;i++){const p=(t/3500+i/6)%1;cx.fillStyle=`rgba(220,220,230,${.25*(1-p)})`;cx.beginPath();cx.arc(fh[1]*W_+u*.02+Math.sin(p*5+i)*u*.012+p*u*.03,fh[2]*H_-u*.12-p*u*.14,u*(.008+p*.02),0,7);cx.fill()}
+ /* يراعات بالليل */
+ if(n>.25)for(let i=0;i<26;i++){const x=(i*83.7+t*.012*(1+i%3))%W_,y=H_*(.5+((i*47)%45)/100)+Math.sin(t/500+i)*8;cx.fillStyle=`rgba(255,245,150,${n*(.4+.6*Math.sin(t/300+i*2))})`;cx.beginPath();cx.arc(x,y,2,0,7);cx.fill()}
+ /* فقاعات الجمع */
+ for(const k in BLD){if(ready(k)>=BLD[k].rate*.5){const x=BLD[k].x*W_,y=BLD[k].y*H_-u*.14+Math.sin(t/260+x)*4,r=u*.045;cx.fillStyle='#fff';cx.beginPath();cx.arc(x,y,r,0,7);cx.fill();cx.strokeStyle=BLD[k].res==='gold'?'#e2b04a':'#3cb382';cx.lineWidth=3;cx.stroke();cx.font=r*1.1+'px '+FONT;cx.textAlign='center';cx.textBaseline='middle';cx.fillStyle='#000';cx.fillText(RN[BLD[k].res],x,y+1)}}
+ /* لوحات الأسماء */
+ cx.font='800 '+Math.max(12,u*.032)+'px Tajawal,sans-serif';cx.textAlign='center';cx.textBaseline='middle';
+ for(const h of HIT){if(h[0]==='castle')continue;const x=h[1]*W_,y=h[2]*H_+u*.075,tx=NM[h[0]],w=cx.measureText(tx).width+18,ph=u*.05;
+  cx.fillStyle='rgba(8,14,24,.78)';cx.strokeStyle='rgba(226,176,74,.75)';cx.lineWidth=1.5;cx.beginPath();(cx.roundRect?cx.roundRect(x-w/2,y-ph/2,w,ph,ph/2):cx.rect(x-w/2,y-ph/2,w,ph));cx.fill();cx.stroke();cx.fillStyle='#fff0b0';cx.fillText(tx,x,y+1)}
+ cx.textBaseline='alphabetic';
+ return n};
+
+/* المعركة */
+window.battleScene=function(t){
+ const b=battle,e=clamp((performance.now()-b.t0)/2800,0,1),u=Math.min(W_,H_);
+ if(IM.battle){const L=lay(IM.battle);cx.drawImage(IM.battle,L.x,L.y,L.w,L.h)}
+ else{const g=cx.createLinearGradient(0,0,0,H_);g.addColorStop(0,'#120822');g.addColorStop(.6,'#4a2230');g.addColorStop(.62,'#221c28');g.addColorStop(1,'#0d0a12');cx.fillStyle=g;cx.fillRect(0,0,W_,H_)}
+ const gy=H_*.78,hs=S.act.length?S.act:[null];
+ const hit=Math.floor(e*6);
+ if(hit>b.hits){b.hits=hit;b.dmg.push({x:W_*.72,y:H_*.45,t:Math.floor(power()*rnd(.1,.25)),a:1});for(let i=0;i<14;i++)pts.push({x:W_*.7,y:H_*.58,vx:rnd(-3,3),vy:rnd(-4,1),a:1,c:b.win?'#ffe090':'#d94831'});fxA=.5}
+ cx.textBaseline='alphabetic';
+ hs.forEach((id,i)=>{const lunge=Math.max(0,Math.sin(e*6*Math.PI))*u*.12*(b.win||e<.7?1:.3),x=W_*(.16+i*.11)+lunge,y=gy-(i%2)*u*.04,im=id&&IM['h_'+id];
+  cx.fillStyle='rgba(0,0,0,.45)';cx.beginPath();cx.ellipse(x,y+u*.03,u*.07,u*.015,0,0,7);cx.fill();
+  if(im){const h=u*.42,w=im.width/im.height*h;cx.drawImage(im,x-w/2,y-h+u*.03,w,h)}
+  else{cx.font=u*.17+'px '+FONT;cx.textAlign='center';cx.fillText(id?HER.find(q=>q[0]===id)[3]:'⚔️',x,y)}});
+ const shake=(Math.sin(e*6*Math.PI)>.9?6:0)*(Math.random()-.5),dead=b.win&&e>.88;
+ cx.globalAlpha=dead?clamp(1-(e-.88)/.12,0,1):1;
+ const em=IM['e'+b.e],ex=W_*.74+shake,ey=gy+Math.sin(t/260)*5-(dead?(e-.88)*200:0);
+ cx.fillStyle='rgba(0,0,0,.5)';cx.beginPath();cx.ellipse(W_*.74,gy+u*.04,u*.2,u*.035,0,0,7);cx.fill();
+ if(em){const h=u*.62,w=em.width/em.height*h;cx.drawImage(em,ex-w/2,ey-h+u*.04,w,h)}
+ else{cx.font=u*.42+'px '+FONT;cx.textAlign='center';cx.fillText(b.e,ex,ey)}
+ cx.globalAlpha=1;
+ const bar=(x,y,w,f,c)=>{cx.fillStyle='rgba(0,0,0,.65)';cx.fillRect(x,y,w,14);cx.fillStyle=c;cx.fillRect(x+2,y+2,(w-4)*clamp(f,0,1),10)};
+ bar(W_*.1,H_*.2,W_*.3,b.win?1-e*.15:1-e*.9,'#3cb382');bar(W_*.6,H_*.2,W_*.3,b.win?1-e:1-e*.3,'#d94831');
+ cx.fillStyle='#fff';cx.font='800 '+u*.05+'px Tajawal,sans-serif';cx.textAlign='center';cx.fillText(b.n,W_*.75,H_*.17);cx.fillText(S.name,W_*.25,H_*.17);
+ for(const d of b.dmg){d.y-=1.1;d.a-=.014;cx.globalAlpha=Math.max(0,d.a);cx.fillStyle='#ffe090';cx.font='800 '+u*.06+'px Tajawal,sans-serif';cx.fillText('-'+fmt(d.t),d.x,d.y);cx.globalAlpha=1}
+ if(e>=1)endBattle()};
+
+/* تغليف الواجهة بصور (اختياري، وإذا ما وُجدت الصورة يبقى الشكل القديم) */
+const st=document.createElement('style');
+const bgi=(f,fb)=>`url(${AS}ui/${f}) center/100% 100% no-repeat,${fb}`;
+st.textContent=`.lvl{background:${bgi('plaque.png','linear-gradient(180deg,rgba(16,28,45,.94),rgba(6,12,20,.94))')}}
+.pill{background:${bgi('pill.png','linear-gradient(180deg,rgba(24,38,58,.95),rgba(10,18,28,.95))')}}
+.power{background:${bgi('power.png','linear-gradient(180deg,#6b1911,#2e0503)')}}
+.ib{background:${bgi('btn.png','linear-gradient(180deg,rgba(22,38,60,.95),rgba(8,16,28,.95))')}}
+.atk{background:${bgi('attack.png','linear-gradient(180deg,#ffb299,#d94831)')}}
+.win{background:url(${AS}ui/window.jpg) center/cover,linear-gradient(180deg,#122238,#07101c)}`;
+document.head.appendChild(st);
+const ic=(el,f,sz)=>{if(!el)return;const i=new Image();i.onload=()=>{el.innerHTML='';i.style.cssText=`width:${sz};height:${sz};object-fit:contain;display:block;margin:auto`;el.appendChild(i)};i.src=AS+'ui/'+f};
+ic($('rG').previousElementSibling,'coin.png','24px');ic($('rW').previousElementSibling,'wood.png','24px');ic($('rS').previousElementSibling,'stone.png','24px');
+ic(document.querySelector('.crest'),'crest.png','100%');
+['heroes','ally','mis','shop'].forEach(k=>ic(document.querySelector(`[data-w=${k}] span`),'icon_'+k+'.png','36px'));
+
+/* وضع تحديد المواقع: افتح اللعبة بـ ?edit */
+if(/[?&]edit/.test(location.search)){const ks=Object.keys(P);let i=0,np={};
+ setTimeout(()=>toast('وضع التعديل: المس '+NM[ks[0]]),800);
+ document.addEventListener('pointerdown',e=>{const d=IM.day||IM.night;if(!d||e.target.closest('button,.ov'))return;e.stopPropagation();e.preventDefault();
+  const L=lay(d);np[ks[i]]=[+((e.clientX-L.x)/L.w).toFixed(3),+((e.clientY-L.y)/L.h).toFixed(3)];i++;
+  if(i<ks.length)toast('المس '+NM[ks[i]]);
+  else{try{localStorage.setItem('kd_pos',JSON.stringify(np))}catch(x){}Object.assign(P,np);toast('✅ تم الحفظ','good');i=0;np={}}},true)}
+})();
+</script>
 </body>
 </html>
