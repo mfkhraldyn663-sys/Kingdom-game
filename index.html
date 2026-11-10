@@ -108,8 +108,8 @@ function fresh(){const t=Date.now();return{name:'مملكة '+['الفجر','ا�
 function load(){try{const o=JSON.parse(localStorage.getItem(KEY));if(o&&o.name){const f=fresh();return Object.assign(f,o,{m:Object.assign({got:{}},o.m)})}}catch(e){}return fresh()}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}dirty=true}
 S=load();
-const allyOf=id=>allies.find(a=>a.id===id);
-const members=id=>players.filter(p=>p.ally===id&&Date.now()-p.at<864e5||(p.id===uid&&S.ally===id));
+const allyOf=id=>allies.find(a=>a.id===id)||(S.allyInfo&&S.allyInfo.id===id?S.allyInfo:null);
+const members=id=>{const o=players.filter(p=>p.id!==uid&&p.ally===id&&Date.now()-p.at<864e5);if(S.ally===id)o.push({id:uid,name:S.name,power:0,ally:id});return o};
 const hp_=(h,lv)=>Math.floor(h[4]*(1+(lv-1)*.25));
 const heroPow=s=>s.act.reduce((t,id)=>{const h=HER.find(x=>x[0]===id);return t+(h&&s.hs[id]?hp_(h,s.hs[id]):0)},0);
 const armPow=s=>ARM.reduce((t,a)=>t+(s.arm[a[0]]?a[4]:0),0);
@@ -120,10 +120,10 @@ function ready(k){const b=BLD[k];return Math.min(b.rate*10*(1+S.lvl*.2),(Date.no
 function collect(k){const v=Math.floor(ready(k));if(v<5){toast('لسه ما جهز — انتظر قليلاً');return}S[BLD[k].res]+=v;S.t[k]=Date.now();mp('collect');gain(4);float(k,'+'+v+' '+RN[BLD[k].res]);save();hud()}
 function mp(k,n=1){S.m[k]=(S.m[k]||0)+n}
 function hud(){$('kName').textContent=S.name;$('lv').textContent='المستوى '+S.lvl;$('xp').style.width=(S.exp/(100*S.lvl)*100)+'%';$('rG').textContent=fmt(S.gold);$('rW').textContent=fmt(S.wood);$('rS').textContent=fmt(S.stone);$('pw').textContent=fmt(power());
- $('net').textContent=netErr?'🔴 '+netErr:online?'🟢 أونلاين · '+players.filter(p=>p.id!==uid&&Date.now()-p.at<864e5).length+' لاعب':'🟡 يتصل بالخادم...';
+ $('net').textContent=netErr?'🔴 '+netErr:online&&loadedP?'🟢 أونلاين · '+players.filter(p=>p.id!==uid&&Date.now()-p.at<864e5).length+' لاعب آخر':'🟡 يتصل بالخادم...';
  $('bMis').classList.toggle('dot',MIS.some(m=>(S.m[m[0]]||0)>=m[2]&&!S.m.got[m[0]]))}
 /* ───── الشبكة (Firebase) ───── */
-let netErr='';
+let netErr='',loadedP=false,loadedA=false;
 async function net(){try{
  try{uid=localStorage.getItem('kd_uid')}catch(e){}
  if(!uid||uid==='local'){uid='u'+Math.random().toString(36).slice(2,10)+Date.now().toString(36);try{localStorage.setItem('kd_uid',uid)}catch(e){}}
@@ -137,8 +137,8 @@ async function net(){try{
  const wrap=q=>({onSnapshot:(ok,er)=>F.onSnapshot(q,ok,er),where:(a,b,c)=>wrap(F.query(q,F.where(a,b,c))),limit:n=>wrap(F.query(q,F.limit(n)))});
  db={collection:n=>Object.assign(wrap(F.collection(fs,n)),{doc:id=>({set:o=>F.setDoc(F.doc(fs,n,id),o)})})};
  const bad=e=>{netErr=e.code||'error';online=false;hud()};
- db.collection('players').onSnapshot(s=>{online=true;netErr='';players=s.docs.map(x=>({id:x.id,...x.data()}));hud();refresh()},bad);
- db.collection('alliances').onSnapshot(s=>{allies=s.docs.map(x=>({id:x.id,...x.data()}));refresh()},bad);
+ db.collection('players').onSnapshot(s=>{online=true;loadedP=true;netErr='';players=s.docs.map(x=>({id:x.id,...x.data()}));hud();refresh()},bad);
+ db.collection('alliances').onSnapshot(s=>{allies=s.docs.map(x=>({id:x.id,...x.data()}));loadedA=true;if(S.ally&&S.allyInfo&&!allies.find(a=>a.id===S.ally))db.collection('alliances').doc(S.ally).set({name:S.allyInfo.name,owner:uid}).catch(()=>{});refresh()},bad);
  db.collection('raids').where('to','==',uid).limit(30).onSnapshot(s=>{for(const x of s.docs){const r=x.data();if(S.applied.includes(x.id))continue;S.applied.push(x.id);S.applied=S.applied.slice(-60);const l=Math.min(r.loot,S.gold);S.gold-=l;if(r.t>(S.seen||0))toast('🏴 '+r.name+' نهب منك '+fmt(l)+' 🪙','bad');S.seen=Date.now()}save();hud()},bad);
  sync(true);hud()}catch(e){netErr=e.code||String(e.message||e).slice(0,40);online=false;hud()}}
 function sync(f){if(!db||(!dirty&&!f)||Date.now()-lastSync<4000)return;lastSync=Date.now();dirty=false;db.collection('players').doc(uid).set({name:S.name,power:power(),gold:Math.floor(S.gold),lvl:S.lvl,wall:S.wall,ally:S.ally,at:Date.now()}).then(()=>{if(online)netErr=''}).catch(e=>{netErr='write:'+(e.code||'error');hud()})}
@@ -173,9 +173,9 @@ function render(){let h='';const P=power();
  if(cur==='heroes'){h=card('⚔️','جنود: '+S.troops,'الجندي بـ 100 🪙 يضيف 12 قوة',`<button class="bt" data-tr="1" ${S.gold<100?'disabled':''}>+1</button><button class="bt j" data-tr="10" ${S.gold<1000?'disabled':''}>+10</button>`)+card('🧱','السور لفل '+S.wall,`يرفع دفاعك — ${300*(S.wall+1)} 🪵 + ${200*(S.wall+1)} 🪨`,`<button class="bt" data-wall="1" ${S.wood<300*(S.wall+1)||S.stone<200*(S.wall+1)?'disabled':''}>ترقية</button>`)+`<small style="color:var(--dim)">الأبطال المفعّلون ${S.act.length}/3</small>`+HER.map(x=>{const lv=S.hs[x[0]],r=RK[x[2]],on=S.act.includes(x[0]);return card(x[3],esc(x[1])+`<span class="tag" style="color:${r[1]}">${r[0]}</span>`,lv?`لفل ${lv} · قوة ${fmt(hp_(x,lv))}`:`قوة ${fmt(x[4])} · غير مجنّد`,lv?`<button class="bt g" data-act="${x[0]}">${on?'إيقاف':'تفعيل'}</button><button class="bt" data-up="${x[0]}" ${S.gold<x[4]*lv*6?'disabled':''}>⬆ ${fmt(x[4]*lv*6)}</button>`:`<button class="bt j" data-rec="${x[0]}" ${S.gold<r[2]?'disabled':''}>${fmt(r[2])}🪙</button>`)}).join('')}
  if(cur==='shop')h=ARM.map(a=>card(a[2],a[1],`+${fmt(a[4])} قوة`,S.arm[a[0]]?'<small>✅ مملوك</small>':`<button class="bt" data-arm="${a[0]}" ${S.gold<a[3]?'disabled':''}>${fmt(a[3])}🪙</button>`)).join('')+card('📦','حزمة موارد','500 🪵 + 300 🪨 مقابل 6,000 🪙',`<button class="bt" data-buy="p" ${S.gold<6000?'disabled':''}>شراء</button>`)+card('⚡','تسريع الإنتاج','يجهّز كل المباني — 4,000 🪙',`<button class="bt j" data-buy="s" ${S.gold<4000?'disabled':''}>شراء</button>`)
  if(cur==='mis')h=MIS.map(m=>{const v=Math.min(m[2],S.m[m[0]]||0),ok=v>=m[2],got=S.m.got[m[0]];return card(got?'✅':'📜',m[1],`${v}/${m[2]} — الجائزة ${fmt(m[3])} 🪙<div class="bar"><i style="width:${v/m[2]*100}%"></i></div>`,`<button class="bt j" data-mis="${m[0]}" ${!ok||got?'disabled':''}>استلم</button>`)}).join('')
- if(cur==='name')h=`<input type="text" id="nm" maxlength="18" value="${esc(S.name)}"><button class="bt" data-nm="1">حفظ</button>`
+ if(cur==='name')h=`<input type="text" id="nm" maxlength="18" value="${esc(S.name)}"><button class="bt" data-nm="1">حفظ</button><small style="color:var(--dim);text-align:center">معرّفك: ${esc(uid)} — إن تغيّر بعد إغلاق التطبيق فبياناتك لا تُحفظ على الجهاز</small>`
  if(cur==='result'){const a=arg;h=`<div style="text-align:center;padding:10px"><div style="font-size:64px">${a.win?'🏆':'💀'}</div><h2 style="font-family:var(--fd);font-weight:400;font-size:24px;color:${a.win?'var(--gold2)':'var(--ember)'}">${a.win?'نصر':'هزيمة'} أمام ${esc(a.t)}</h2><p style="margin:8px 0">${a.msg}</p><button class="bt" data-close="1" style="width:100%">متابعة</button></div>`}
- if(cur==='ally'){const mine=S.ally&&allyOf(S.ally);if(mine){const ms=members(mine.id);h=card('🏯',esc(mine.name),`${ms.length} عضو · قوة التحالف ${fmt(ms.reduce((t,p)=>t+(p.id===uid?P:p.power||0),0))} · مكافأة قوة +${Math.min(20,2*(ms.length-1))}%`,'<button class="bt r" data-leave="1">مغادرة</button>')+ms.map(p=>card(p.id===uid?'👑':'🛡️',esc(p.id===uid?S.name:p.name)+(p.id===uid?' (أنت)':''),'قوة '+fmt(p.id===uid?P:p.power||0),'')).join('')}
+ if(cur==='ally'){const mine=S.ally&&allyOf(S.ally);if(db&&!loadedA&&!mine)h='<div class="card"><div class="e">⏳</div><div class="g"><b>جارٍ تحميل التحالفات...</b><small>انتظر ثوانٍ، الاتصال بالخادم أبطأ من المعتاد</small></div></div>';else if(mine){const ms=members(mine.id);h=card('🏯',esc(mine.name),`${ms.length} عضو · قوة التحالف ${fmt(ms.reduce((t,p)=>t+(p.id===uid?P:p.power||0),0))} · مكافأة قوة +${Math.min(20,2*(ms.length-1))}%`,'<button class="bt r" data-leave="1">مغادرة</button>')+ms.map(p=>card(p.id===uid?'👑':'🛡️',esc(p.id===uid?S.name:p.name)+(p.id===uid?' (أنت)':''),'قوة '+fmt(p.id===uid?P:p.power||0),'')).join('')}
   else h=`<div class="card"><input type="text" id="an" maxlength="16" placeholder="اسم تحالفك الجديد"><button class="bt" data-mk="1">إنشاء</button></div><small style="color:var(--dim)">التحالفات المتاحة:</small>`+(allies.length?allies.map(a=>card('🏯',esc(a.name),members(a.id).length+' عضو',`<button class="bt j" data-join="${esc(a.id)}">انضمام</button>`)).join(''):'<small style="color:var(--dim)">لا توجد تحالفات بعد — كن أول من ينشئ واحداً.</small>')}
  $('wb').innerHTML=h;const nm=$('nm');if(nm)nm.focus()}
 document.addEventListener('input',e=>{if(e.target.id==='hs'){hl=+e.target.value;render();$('hs').focus()}});
@@ -192,9 +192,9 @@ document.addEventListener('click',e=>{const t=e.target.closest('button,#lvlBox')
  if(d.buy==='s'&&S.gold>=4000){S.gold-=4000;for(const k in S.t)S.t[k]=0}
  if(d.mis){const m=MIS.find(x=>x[0]===d.mis);if(m&&(S.m[m[0]]||0)>=m[2]&&!S.m.got[m[0]]){S.m.got[m[0]]=1;S.gold+=m[3];gain(20);toast('+'+fmt(m[3])+' 🪙','good')}}
  if(d.nm){const v=$('nm').value.trim().slice(0,18);if(v){S.name=v;save();hud();closeWin();return}}
- if(d.mk){const v=$('an').value.trim().slice(0,16);if(!v)return;if(!db){toast('التحالفات تحتاج اتصالاً بالإنترنت','bad');return}const id='a'+Date.now().toString(36);db.collection('alliances').doc(id).set({name:v,owner:uid}).then(()=>{S.ally=id;mp('ally');save();hud();render();toast('🏯 تم إنشاء التحالف','good')}).catch(()=>toast('تعذّر الإنشاء','bad'));return}
- if(d.join){S.ally=d.join;mp('ally');toast('🏯 انضممت للتحالف','good')}
- if(d.leave)S.ally='';
+ if(d.mk){const v=$('an').value.trim().slice(0,16);if(!v)return;if(!db){toast('التحالفات تحتاج اتصالاً بالإنترنت','bad');return}const id='a'+Date.now().toString(36);S.ally=id;S.allyInfo={id,name:v};mp('ally');save();sync(true);hud();render();toast('🏯 تم إنشاء التحالف','good');db.collection('alliances').doc(id).set({name:v,owner:uid}).catch(e=>{S.ally='';S.allyInfo=null;save();hud();render();toast('تعذّر الإنشاء: '+(e.code||'خطأ'),'bad')});return}
+ if(d.join){const a=allyOf(d.join);S.ally=d.join;S.allyInfo=a?{id:a.id,name:a.name}:null;mp('ally');toast('🏯 انضممت للتحالف','good')}
+ if(d.leave){S.ally='';S.allyInfo=null}
  if(d.atk||d.hunt||d.cave||d.tow)return;save();sync(true);hud();if(cur)render()});
 $('ov').addEventListener('pointerdown',e=>{if(e.target.id==='ov')closeWin()});
 /* ───── الرسم ───── */
