@@ -84,8 +84,6 @@ input[type=range]{width:100%;accent-color:var(--ember)}
 </div>
 <div class="ov" id="ov"><div class="win" id="win"><div class="wh"><span id="wi" style="font-size:26px"></span><h2 id="wt"></h2><button class="x" id="wx" aria-label="إغلاق">✕</button></div><div class="wb" id="wb"></div></div></div>
 <div class="toasts" id="toasts"></div>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
 'use strict';
 const FIREBASE_CONFIG={apiKey:'AIzaSyCzXFzUtslS4IjZp1kmIiGkzitESqySjmg',authDomain:'maro-cb195.firebaseapp.com',projectId:'maro-cb195',storageBucket:'maro-cb195.firebasestorage.app',messagingSenderId:'832675540796',appId:'1:832675540796:web:3130a19e894ee655ab3839'};
@@ -122,15 +120,28 @@ function ready(k){const b=BLD[k];return Math.min(b.rate*10*(1+S.lvl*.2),(Date.no
 function collect(k){const v=Math.floor(ready(k));if(v<5){toast('لسه ما جهز — انتظر قليلاً');return}S[BLD[k].res]+=v;S.t[k]=Date.now();mp('collect');gain(4);float(k,'+'+v+' '+RN[BLD[k].res]);save();hud()}
 function mp(k,n=1){S.m[k]=(S.m[k]||0)+n}
 function hud(){$('kName').textContent=S.name;$('lv').textContent='المستوى '+S.lvl;$('xp').style.width=(S.exp/(100*S.lvl)*100)+'%';$('rG').textContent=fmt(S.gold);$('rW').textContent=fmt(S.wood);$('rS').textContent=fmt(S.stone);$('pw').textContent=fmt(power());
- $('net').textContent=online?'🟢 أونلاين · '+players.filter(p=>p.id!==uid&&Date.now()-p.at<864e5).length+' لاعب':'⚪ دون اتصال (خصوم آليون)';
+ $('net').textContent=netErr?'🔴 '+netErr:online?'🟢 أونلاين · '+players.filter(p=>p.id!==uid&&Date.now()-p.at<864e5).length+' لاعب':'🟡 يتصل بالخادم...';
  $('bMis').classList.toggle('dot',MIS.some(m=>(S.m[m[0]]||0)>=m[2]&&!S.m.got[m[0]]))}
 /* ───── الشبكة (Firebase) ───── */
-async function net(){try{if(!window.firebase)return;firebase.initializeApp(FIREBASE_CONFIG);db=firebase.firestore();try{uid=localStorage.getItem('kd_uid')}catch(e){}if(!uid||uid==='local'){uid='u'+Math.random().toString(36).slice(2,10)+Date.now().toString(36);try{localStorage.setItem('kd_uid',uid)}catch(e){}}online=true;
- db.collection('players').onSnapshot(s=>{players=s.docs.map(x=>({id:x.id,...x.data()}));hud();refresh()},()=>{});
- db.collection('alliances').onSnapshot(s=>{allies=s.docs.map(x=>({id:x.id,...x.data()}));refresh()},()=>{});
- db.collection('raids').where('to','==',uid).limit(30).onSnapshot(s=>{for(const x of s.docs){const r=x.data();if(S.applied.includes(x.id))continue;S.applied.push(x.id);S.applied=S.applied.slice(-60);const l=Math.min(r.loot,S.gold);S.gold-=l;if(r.t>(S.seen||0))toast('🏴 '+r.name+' نهب منك '+fmt(l)+' 🪙','bad');S.seen=Date.now()}save();hud()},()=>{});
- sync(true);hud()}catch(e){online=false}}
-function sync(f){if(!db||(!dirty&&!f)||Date.now()-lastSync<4000)return;lastSync=Date.now();dirty=false;db.collection('players').doc(uid).set({name:S.name,power:power(),gold:Math.floor(S.gold),lvl:S.lvl,wall:S.wall,ally:S.ally,at:Date.now()}).catch(()=>{})}
+let netErr='';
+async function net(){try{
+ try{uid=localStorage.getItem('kd_uid')}catch(e){}
+ if(!uid||uid==='local'){uid='u'+Math.random().toString(36).slice(2,10)+Date.now().toString(36);try{localStorage.setItem('kd_uid',uid)}catch(e){}}
+ const G='https://www.gstatic.com/firebasejs/10.12.2/';
+ const A=await import(G+'firebase-app.js'),F=await import(G+'firebase-firestore.js');
+ const app=A.initializeApp(FIREBASE_CONFIG);let fs=null,last='';
+ for(const id of ['(default)','default']){let x;try{x=F.initializeFirestore(app,{experimentalForceLongPolling:true},id);
+   await Promise.race([F.getDocs(F.query(F.collection(x,'players'),F.limit(1))),new Promise((_,r)=>setTimeout(()=>r({code:'timeout'}),8000))]);fs=x;break}
+  catch(e){last=e.code||String(e.message||e).slice(0,40);if(last==='permission-denied'){fs=x;break}}}
+ if(!fs){netErr=last||'no-connection';hud();return}
+ const wrap=q=>({onSnapshot:(ok,er)=>F.onSnapshot(q,ok,er),where:(a,b,c)=>wrap(F.query(q,F.where(a,b,c))),limit:n=>wrap(F.query(q,F.limit(n)))});
+ db={collection:n=>Object.assign(wrap(F.collection(fs,n)),{doc:id=>({set:o=>F.setDoc(F.doc(fs,n,id),o)})})};
+ const bad=e=>{netErr=e.code||'error';online=false;hud()};
+ db.collection('players').onSnapshot(s=>{online=true;netErr='';players=s.docs.map(x=>({id:x.id,...x.data()}));hud();refresh()},bad);
+ db.collection('alliances').onSnapshot(s=>{allies=s.docs.map(x=>({id:x.id,...x.data()}));refresh()},bad);
+ db.collection('raids').where('to','==',uid).limit(30).onSnapshot(s=>{for(const x of s.docs){const r=x.data();if(S.applied.includes(x.id))continue;S.applied.push(x.id);S.applied=S.applied.slice(-60);const l=Math.min(r.loot,S.gold);S.gold-=l;if(r.t>(S.seen||0))toast('🏴 '+r.name+' نهب منك '+fmt(l)+' 🪙','bad');S.seen=Date.now()}save();hud()},bad);
+ sync(true);hud()}catch(e){netErr=e.code||String(e.message||e).slice(0,40);online=false;hud()}}
+function sync(f){if(!db||(!dirty&&!f)||Date.now()-lastSync<4000)return;lastSync=Date.now();dirty=false;db.collection('players').doc(uid).set({name:S.name,power:power(),gold:Math.floor(S.gold),lvl:S.lvl,wall:S.wall,ally:S.ally,at:Date.now()}).then(()=>{if(online)netErr=''}).catch(e=>{netErr='write:'+(e.code||'error');hud()})}
 setInterval(()=>sync(),5000);
 function bots(){const P=Math.max(power(),400),g=Math.max(S.gold,2000);return[['قلعة الذئب',.55,.4],['حصن الصقر',.9,.7],['مملكة الجليد',1.35,1]].map((b,i)=>({id:'bot'+i,name:b[0],power:Math.floor(P*b[1]),gold:Math.floor(g*b[2]),wall:i,bot:true}))}
 function foes(){const r=players.filter(p=>p.id!==uid&&Date.now()-p.at<864e5);return r.length<3?r.concat(bots().slice(0,3-r.length)):r}
