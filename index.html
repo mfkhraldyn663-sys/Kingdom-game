@@ -103,7 +103,7 @@ const BEAT={نار:['ثلج','رياح'],ماء:['نار','أرض'],أرض:['ب�
 const elM=(a,d)=>BEAT[a]&&BEAT[a].includes(d)?1.25:BEAT[d]&&BEAT[d].includes(a)?.8:1;
 const monEl=L=>ELS[(L*7)%10];
 /* ===== الصور والفيديو بدون مجلدات: كلها بجانب index.html — kingdom.webp ، maro.webp ، maro.mp4 ===== */
-const MEDIA={bg:'kingdom',hero:id=>id,vid:id=>id+'.mp4'};
+const MEDIA={bg:'kingdom',hero:id=>({maro:'maro'}[id]||id),vid:id=>({maro:'maro'}[id]||id)+'.mp4'};
 const EXT=['webp','png','jpg','jpeg'];
 const MT=[['🐀','جرذ متوحش'],['🐺','ذئب الغابة'],['🦂','عقرب الصحراء'],['🐊','تمساح المستنقع'],['🧟','زومبي الليل'],['👹','غول الجبل'],['🦖','سحلية عملاقة'],['🐲','تنين فتي'],['😈','شيطان الجحيم'],['👾','كائن الفراغ']];
 const monI=L=>L>=100?['☠️','سيد الموت']:MT[Math.min(9,Math.floor((L-1)/10))];
