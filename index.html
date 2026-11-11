@@ -53,6 +53,7 @@ input[type=range]{width:100%;accent-color:var(--ember)}
 .bar{height:8px;background:rgba(255,255,255,.1);border-radius:5px;overflow:hidden;margin-top:4px}.bar i{display:block;height:100%;background:var(--jade)}
 .win.full{width:100vw;max-width:none;height:100%;max-height:100%;border-radius:0;border-width:0}.win.full .wb{padding:0;flex:1;min-height:0}.ov.full{padding:0}
 .prog{height:10px;border-radius:6px;background:rgba(255,255,255,.12);overflow:hidden}.prog i{display:block;height:100%;background:linear-gradient(90deg,var(--sky),var(--jade));transition:width .2s}
+.upd{position:absolute;top:calc(78px + env(safe-area-inset-top,0px));left:50%;translate:-50% 0;display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:14px;z-index:15;max-width:92%;border-color:var(--jade);animation:pop .3s}.upd[hidden]{display:none}.upd span{font-weight:800;font-size:14px}
 .toasts{position:fixed;top:70px;left:50%;translate:-50% 0;z-index:40;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
 .toast{background:rgba(7,16,27,.95);border:1px solid var(--gold);border-radius:12px;padding:6px 14px;font-weight:800;animation:pop .2s,fade .4s 2.4s forwards}
 .toast.bad{border-color:var(--ember)}.toast.good{border-color:var(--jade)}
@@ -74,6 +75,7 @@ input[type=range]{width:100%;accent-color:var(--ember)}
  <div class="res"><div class="pill glass"><span>🪙</span><b id="rG"></b></div><div class="pill glass"><span>🪵</span><b id="rW"></b></div><div class="pill glass"><span>🪨</span><b id="rS"></b></div></div>
  <div style="display:grid;gap:5px;justify-items:end"><div class="power"><small>القوة</small><b id="pw"></b></div><div class="net glass" id="net"></div></div>
 </div>
+<div class="upd glass" id="upd" hidden><span id="updT"></span><button class="bt j" id="updB">⬇️ تحديث</button><button class="x" id="updX" aria-label="إغلاق">✕</button></div>
 <div class="dock">
  <button class="atk" id="bAtk">⚔️ هجوم</button>
  <div class="btns">
@@ -93,6 +95,10 @@ const FIREBASE_CONFIG={apiKey:'AIzaSyCzXFzUtslS4IjZp1kmIiGkzitESqySjmg',authDoma
 const $=id=>document.getElementById(id),rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lp=(a,b,t)=>a+(b-a)*t;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=n=>{n=Math.floor(n);const a=Math.abs(n);return a>=1e9?(n/1e9).toFixed(1).replace(/\.0$/,'')+'مليار':a>=1e6?(n/1e6).toFixed(1).replace(/\.0$/,'')+'م':a>=1e4?(n/1e3).toFixed(1).replace(/\.0$/,'')+'ك':n.toLocaleString('en-US')};
+/* ===== رقم إصدار هذا الملف: ارفعه 1 مع كل تحديث تريد إعلامه للناس ===== */
+const APP_VERSION=1;
+let UPD=null;
+function showUpd(d){if(!d||!(+d.version>APP_VERSION))return;UPD=d;$('updT').textContent='🆕 '+(d.msg||'يتوفر تحديث جديد للعبة');$('updX').style.display=d.force?'none':'';$('upd').hidden=false}
 const KEY='kd_online_v1';
 const RN={gold:'🪙',wood:'🪵',stone:'🪨'};
 const BLD={farm:{res:'gold',rate:90,x:.27,y:.72},lumber:{res:'wood',rate:30,x:.8,y:.74},mine:{res:'stone',rate:20,x:.4,y:.86}};
@@ -109,7 +115,7 @@ const BEAT={نار:['ثلج','رياح'],ماء:['نار','أرض'],أرض:['ب�
 const elM=(a,d)=>BEAT[a]&&BEAT[a].includes(d)?1.25:BEAT[d]&&BEAT[d].includes(a)?.8:1;
 const monEl=L=>ELS[(L*7)%10];
 /* ===== الصور والفيديو بدون مجلدات: كلها بجانب index.html — kingdom.webp ، maro.webp ، maro.mp4 ===== */
-const MEDIA={bg:'kingdom',hero:id=>({maro:'maro'}[id]||id),vid:id=>({maro:'maro'}[id]||id)+'.mp4'};
+const MEDIA={bg:'kingdom',hero:id=>id,vid:id=>id+'.mp4'};
 const EXT=['webp','png','jpg','jpeg','WEBP','PNG','JPG','JPEG'];
 const MT=[['🐀','جرذ متوحش'],['🐺','ذئب الغابة'],['🦂','عقرب الصحراء'],['🐊','تمساح المستنقع'],['🧟','زومبي الليل'],['👹','غول الجبل'],['🦖','سحلية عملاقة'],['🐲','تنين فتي'],['😈','شيطان الجحيم'],['👾','كائن الفراغ']];
 const monI=L=>L>=100?['☠️','سيد الموت']:MT[Math.min(9,Math.floor((L-1)/10))];
@@ -153,11 +159,12 @@ async function net(){try{
   catch(e){last=e.code||String(e.message||e).slice(0,40);if(last==='permission-denied'){fs=x;break}}}
  if(!fs){netErr=last||'no-connection';hud();return}
  const wrap=q=>({onSnapshot:(ok,er)=>F.onSnapshot(q,ok,er),where:(a,b,c)=>wrap(F.query(q,F.where(a,b,c))),limit:n=>wrap(F.query(q,F.limit(n)))});
- db={collection:n=>Object.assign(wrap(F.collection(fs,n)),{doc:id=>({set:o=>F.setDoc(F.doc(fs,n,id),o)})})};
+ db={collection:n=>Object.assign(wrap(F.collection(fs,n)),{doc:id=>({set:o=>F.setDoc(F.doc(fs,n,id),o),onSnapshot:(ok,er)=>F.onSnapshot(F.doc(fs,n,id),ok,er)})})};
  const bad=e=>{netErr=e.code||'error';online=false;hud()};
  db.collection('players').onSnapshot(s=>{online=true;loadedP=true;netErr='';players=s.docs.map(x=>({id:x.id,...x.data()}));hud();refresh()},bad);
  db.collection('alliances').onSnapshot(s=>{allies=s.docs.map(x=>({id:x.id,...x.data()}));loadedA=true;if(S.ally&&S.allyInfo&&!allies.find(a=>a.id===S.ally))db.collection('alliances').doc(S.ally).set({name:S.allyInfo.name,owner:uid}).catch(()=>{});refresh()},bad);
  db.collection('raids').where('to','==',uid).limit(30).onSnapshot(s=>{for(const x of s.docs){const r=x.data();if(S.applied.includes(x.id))continue;S.applied.push(x.id);S.applied=S.applied.slice(-60);const l=Math.min(r.loot,S.gold);S.gold-=l;if(r.t>(S.seen||0))toast('🏴 '+r.name+' نهب منك '+fmt(l)+' 🪙','bad');S.seen=Date.now()}save();hud()},bad);
+ db.collection('config').doc('update').onSnapshot(d=>{if(d.exists())showUpd(d.data())},()=>{});
  sync(true);hud()}catch(e){netErr=e.code||String(e.message||e).slice(0,40);online=false;hud()}}
 function sync(f){if(!db||(!dirty&&!f)||Date.now()-lastSync<4000)return;lastSync=Date.now();dirty=false;db.collection('players').doc(uid).set({name:S.name,power:Math.floor(power()*(1+.15*Math.min(5,shieldN(S)))),gold:Math.floor(S.gold),lvl:S.lvl,wall:S.wall,ally:S.ally,at:Date.now()}).then(()=>{if(online)netErr=''}).catch(e=>{netErr='write:'+(e.code||'error');hud()})}
 setInterval(()=>sync(),5000);
@@ -201,6 +208,7 @@ function render(){let h='';const P=power();
  $('wb').innerHTML=h;const nm=$('nm');if(nm)nm.focus()}
 document.addEventListener('input',e=>{if(e.target.id==='hs'){hl=+e.target.value;render();$('hs').focus()}});
 document.addEventListener('click',e=>{const t=e.target.closest('button,#lvlBox');if(!t)return;const d=t.dataset;
+ if(t.id==='updB'){if(UPD&&UPD.url){const w=window.open(UPD.url,'_blank');if(!w)location.href=UPD.url}return}if(t.id==='updX'){$('upd').hidden=true;return}
  if(d.vid){vsrc(d.vid).then(src=>openWin('video',{id:d.vid,src}));return}
  if(d.dl){downloadAll();return}if(d.fs){try{document.documentElement.requestFullscreen()}catch(e){toast('اضبط ملء الشاشة من إعدادات Median','bad')}return}if(t.id==='wx'||d.close){closeWin();return}if(t.id==='lvlBox'){openWin('name');return}if(t.id==='bAtk'){openWin('attack');return}if(d.w){openWin(d.w);return}
  if(d.atk)attack(d.atk);if(d.hunt)hunt(hl);if(d.cave)cave(+d.cave);if(d.tow)tower(+d.tow);
