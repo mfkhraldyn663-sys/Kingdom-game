@@ -115,7 +115,21 @@ const BEAT={نار:['ثلج','رياح'],ماء:['نار','أرض'],أرض:['ب�
 const elM=(a,d)=>BEAT[a]&&BEAT[a].includes(d)?1.25:BEAT[d]&&BEAT[d].includes(a)?.8:1;
 const monEl=L=>ELS[(L*7)%10];
 /* ===== الصور والفيديو بدون مجلدات: كلها بجانب index.html — kingdom.webp ، maro.webp ، maro.mp4 ===== */
-const MEDIA={bg:'kingdom',hero:id=>id,vid:id=>id+'.mp4'};
+const HM={
+ bella:['bella','bella'],      // بيلا
+ korin:['korin','korin'],      // كورين
+ sami:['sami','sami'],         // سامي
+ raiko:['raiko','raiko'],      // رايكو
+ luna:['luna','luna'],         // لونا
+ dracu:['dracu','dracu'],      // دراكو
+ titan:['titan','titan'],      // تيتان
+ jinn:['jinn','jinn'],         // سليم الجني
+ marina:['marina','marina'],   // مارينا
+ outa:['outa','outa'],         // أوتا
+ maro:['maro','maro'],         // مارو
+ areej:['areej','areej']       // أريج
+};
+const MEDIA={bg:'kingdom',hero:id=>HM[id]?HM[id][0]:id,vid:id=>(HM[id]?HM[id][1]:id)+'.mp4'};
 const EXT=['webp','png','jpg','jpeg','WEBP','PNG','JPG','JPEG'];
 const MT=[['🐀','جرذ متوحش'],['🐺','ذئب الغابة'],['🦂','عقرب الصحراء'],['🐊','تمساح المستنقع'],['🧟','زومبي الليل'],['👹','غول الجبل'],['🦖','سحلية عملاقة'],['🐲','تنين فتي'],['😈','شيطان الجحيم'],['👾','كائن الفراغ']];
 const monI=L=>L>=100?['☠️','سيد الموت']:MT[Math.min(9,Math.floor((L-1)/10))];
