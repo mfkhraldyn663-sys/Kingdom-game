@@ -332,7 +332,6 @@ const hex6=n=>'#'+n.toString(16).padStart(6,'0');
 /* ===== الباس الملكي ===== */
 const PASS_MAX=30,PASS_STEP=80,PASS_SKIN={10:'ice',20:'inferno',30:'royal'};
 const PASS_GEMS=700; /* سعر الباس الملكي بالجواهر */
-const PASS_SEASON=1; /* رقم موسم الباس: ارفعه (2، 3، ...) عند نزول باس جديد فيُصفَّر تقدم الجميع ويُقفل المسار الملكي */
 function passRew(l,p){const r={};if(!p){r.g=800*l;if(l%2===0)r.w=120*l;else r.s=90*l;if(l%5===0)r.t=20*(l/5)}
  else{r.g=2500*l;r.w=300*l;r.s=220*l;if(l%5===0)r.t=60*(l/5);if(PASS_SKIN[l])r.skin=PASS_SKIN[l]}return r}
 const rewTxt=r=>[r.g&&fmt(r.g)+'🪙',r.w&&fmt(r.w)+'🪵',r.s&&fmt(r.s)+'🪨',r.t&&r.t+'⚔️',r.skin&&'🏰 '+(SKINS.find(s=>s.id===r.skin)||{n:''}).n].filter(Boolean).join(' · ');
@@ -573,7 +572,7 @@ function skinCards(){return SKINS.map(s=>{const own=S.skins.includes(s.id),on=S.
  return `<div class="card skc ${on?'rar':''}" style="${on?'--rc:#f2bd52':s.p<0?'--rc:#a672e8aa':''}"><div class="skv">${skinSVG(s)}</div><div class="g"><b>${esc(s.n)}${tag}</b><small>${esc(s.d||'')}${own?' · ✅ تملكها':''}</small><small class="fx">✨ ${SKX[s.id]||'الشكل الكلاسيكي الأصلي'}</small>${btn}</div></div>`}).join('')}
 function passHTML(){const lv=passLv(),pxp=S.pxp||0,fr=lv>=PASS_MAX?1:(pxp-lv*PASS_STEP)/PASS_STEP;
  let h=`<div class="card rar" style="--rc:#f2bd52"><div class="e">👑</div><div class="g"><b>الباس الملكي — مستوى ${lv}/${PASS_MAX}</b><small>${S.pass?'✅ المسار الملكي مفعّل':'🔒 المسار الملكي مقفل — المسار المجاني مفتوح للجميع'} · التقدم من الصيد والكهوف والمهام والهجوم</small><div class="bar"><i style="width:${fr*100}%"></i></div></div><button class="bt j s" data-plv="1" ${lv>=PASS_MAX||S.gold<8000?'disabled':''}>+1 مستوى 8,000🪙</button><button class="bt r s" data-pall="1">استلام الكل</button></div>`;
- if(!S.pass)h+=`<div class="card rar" style="--rc:#5db4f0"><div class="e">💎</div><div class="g"><b>افتح المسار الملكي</b><small>جوائز أكبر بـ3 أضعاف + سكانات قلعة حصرية — ${S.pFree?'🎁 مجاني لك هذا الموسم (هدية العرض)':PASS_GEMS+' 💎 · رصيدك '+fmt(S.gems||0)+' 💎'}<br>🎁 اشترِ الباس مرتين والثالث مجاني (${Math.min(S.pBuys||0,2)}/2)</small></div><button class="bt" data-gpass="1">${S.pFree?'🎁 استلمه مجاناً':'💎 '+PASS_GEMS+' شراء'}</button>${S.pFree?'':'<button class="bt g" data-gopen="1">شحن</button>'}</div>`;
+ if(!S.pass)h+=`<div class="card rar" style="--rc:#5db4f0"><div class="e">💎</div><div class="g"><b>افتح المسار الملكي</b><small>جوائز أكبر بـ3 أضعاف + سكانات قلعة حصرية — ${PASS_GEMS} 💎 · رصيدك ${fmt(S.gems||0)} 💎</small></div><button class="bt" data-gpass="1">💎 ${PASS_GEMS} شراء</button><button class="bt g" data-gopen="1">شحن</button></div>`;
  h+=`<div class="prow ph"><span>المستوى</span><span>🆓 مجاني</span><span>👑 ملكي</span></div>`;
  const cell=(prem,l)=>{const r=passRew(l,prem),got=(prem?S.pp:S.pf).includes(l),can=l<=lv&&(!prem||S.pass);return `<div class="pcell ${prem?'pr':''} ${got?'got':''}"><small>${rewTxt(r)}</small>${got?'✅':`<button class="bt s ${prem?'':'j'}" data-pc="${prem?'p':'f'}:${l}" ${can?'':'disabled'}>${prem&&!S.pass?'🔒':'استلام'}</button>`}</div>`};
  for(let l=1;l<=PASS_MAX;l++)h+=`<div class="prow ${l<=lv?'on':''}"><b class="plv">${l}</b>${cell(false,l)}${cell(true,l)}</div>`;
@@ -1806,9 +1805,7 @@ const GMMS=[
 
 /* ===== حالة ===== */
 let gmSel=null,gmMeth=null,gmBusy=false,gmGen='';
-function gmEnsure(){S.gems=S.gems||0;S.gemTotal=S.gemTotal||0;S.gPk=S.gPk||{};S.gmClaimed=S.gmClaimed||[];S.gCodes=S.gCodes||[];S.pBuys=S.pBuys||0;S.pFree=!!S.pFree;
- if(S.pSeason==null)S.pSeason=1;
- if(S.pSeason!==PASS_SEASON){S.pSeason=PASS_SEASON;S.pass=false;S.pxp=0;S.pf=[];S.pp=[];try{save()}catch(e){}}}
+function gmEnsure(){S.gems=S.gems||0;S.gemTotal=S.gemTotal||0;S.gPk=S.gPk||{};S.gmClaimed=S.gmClaimed||[];S.gCodes=S.gCodes||[]}
 gmEnsure();
 
 /* ===== الأكواد: NW + حرف الباقة + 6 رموز عشوائية + 5 رموز تحقق ===== */
@@ -1831,7 +1828,8 @@ async function gmRedeem(){gmEnsure();if(gmBusy)return;const inp=$('gmcode');cons
  try{if(await gmGet(p.code)){S.gCodes.push(p.code);save();toast('هذا الكود مستخدم مسبقاً','bad');return}
   await db.collection('gemcodes').doc(p.code).set({uid,name:S.name,pack:p.idx,t:Date.now()});
   const pk=GMPACKS[p.idx];S.gCodes.push(p.code);S.gems+=pk.g;S.gemTotal+=pk.g;giveRew({g:pk.g*GOLD_PER_GEM});
-  let msg='💎 تم شحن '+fmt(pk.g)+' جوهرة + هدية '+fmt(pk.g*GOLD_PER_GEM)+' 🪙';
+  S.gPk[p.idx]=(S.gPk[p.idx]||0)+1;let msg='💎 تم شحن '+fmt(pk.g)+' جوهرة + هدية '+fmt(pk.g*GOLD_PER_GEM)+' 🪙';
+  if(S.gPk[p.idx]%2===0){S.gems+=pk.g;msg+=' + 🎁 باقة مجانية '+fmt(pk.g)+' 💎'}
   save();hud();toast(msg,'good');if(inp)inp.value='';render()}
  catch(e){toast('تعذّر التحقق ('+((e&&e.code)||'خطأ')+') — تأكد من قواعد Firestore ومن الاتصال','bad')}
  finally{gmBusy=false}}
@@ -1846,8 +1844,8 @@ function gmHTML(){gmEnsure();
   if(gmMeth){const m=GMPAY[gmMeth];
    h+=card(m.e,'الدفع عبر '+m.n,`1) حوّل ${pk.usd}$ (أو ما يعادله) إلى: <b style="color:var(--gold2);user-select:text">${esc(m.acc)}</b><br>2) أرسل إثبات الدفع + معرّفك <b style="user-select:text">${esc(uid)}</b> إلى: ${esc(GMCONTACT)}<br>3) ستستلم كود شحن — أدخله في الخانة بالأعلى ثم اضغط تفعيل.`,'','--rc:#f2bd52')}}
  else{
-  h+='<small style="color:var(--dim)">باقات الجواهر</small>'+GMPACKS.map((pk,i)=>{
-   return card('💎',fmt(pk.g)+' 💎 — '+pk.usd+'$',`هدية شحن: ${fmt(pk.g*GOLD_PER_GEM)} 🪙 ${pk.g===PASS_GEMS?' · يكفي للباس الملكي 👑':''}`,`<button class="bt" data-gpk="${i}">شحن</button>`,i===2?'--rc:#f2bd52':'')}).join('');
+  h+='<small style="color:var(--dim)">باقات الجواهر — 🎁 اشترِ باقتين من نفس الفئة والثالثة مجانية</small>'+GMPACKS.map((pk,i)=>{const n=(S.gPk[i]||0)%2;
+   return card('💎',fmt(pk.g)+' 💎 — '+pk.usd+'$',`هدية شحن: ${fmt(pk.g*GOLD_PER_GEM)} 🪙 · 🎁 الثالثة مجانية (${n}/2)${pk.g===PASS_GEMS?' · يكفي للباس الملكي 👑':''}`,`<button class="bt" data-gpk="${i}">شحن</button>`,i===2?'--rc:#f2bd52':'')}).join('');
   h+='<small style="color:var(--dim)">🏆 جوائز الشحن (إجمالي ما شحنته: '+fmt(S.gemTotal)+' 💎)</small>'+GMMS.map((m,i)=>{const got=S.gmClaimed.includes(i),ok=S.gemTotal>=m.need;
    return card(got?'✅':'🎁','اشحن '+fmt(m.need)+' 💎 إجمالاً',rewTxt(m.r),got?'<span class="tag">✅</span>':`<button class="bt j" data-gms="${i}" ${ok?'':'disabled'}>استلم</button>`)}).join('')}
  return h}
@@ -1860,14 +1858,14 @@ function gmDevHTML(){return card('💎','مولّد أكواد الجواهر','
 
 /* ===== ربط بالنظام الحالي ===== */
 const _render=render;
-render=function(){gmEnsure();const iv=$('gmcode'),val=iv?iv.value:'',foc=!!iv&&document.activeElement===iv;_render();
+render=function(){const iv=$('gmcode'),val=iv?iv.value:'',foc=!!iv&&document.activeElement===iv;_render();
  if(cur==='shop'){const tabs=document.querySelector('.shop-tabs');
   if(tabs)tabs.insertAdjacentHTML('beforeend',`<button class="stab ${shopTab==='gem'?'active':''}" data-stab="gem">💎 الجواهر</button>`);
   if(shopTab==='gem')$('wb').insertAdjacentHTML('beforeend',gmHTML());
   const i2=$('gmcode');if(i2){if(val)i2.value=val;if(foc)i2.focus()}}};
 const _dev=devHTML;devHTML=function(){return _dev()+gmDevHTML()};
 const _hud=hud;hud=function(){_hud();const e=$('rGm');if(e)e.textContent=fmt(S.gems||0)};
-const _fresh=fresh;fresh=function(){return Object.assign(_fresh(),{gems:0,gemTotal:0,gPk:{},gmClaimed:[],gCodes:[],pSeason:PASS_SEASON,pBuys:0,pFree:false})};
+const _fresh=fresh;fresh=function(){return Object.assign(_fresh(),{gems:0,gemTotal:0,gPk:{},gmClaimed:[],gCodes:[]})};
 
 /* عدّاد الجواهر في الشريط العلوي */
 const res=document.querySelector('.res');
@@ -1883,9 +1881,8 @@ document.addEventListener('click',e=>{
  if(d.gback){gmSel=null;gmMeth=null;render();return}
  if(d.gredeem){gmRedeem();return}
  if(d.gpass){if(S.pass){toast('الباس مفعّل عندك مسبقاً','good');return}
-  if(!S.pFree&&S.gems<PASS_GEMS){toast('تحتاج '+PASS_GEMS+' 💎 — رصيدك '+fmt(S.gems),'bad');openGems();return}
-  if(S.pFree){S.pFree=false;S.pBuys=0;S.pass=true;save();hud();toast('🎁 تم تفعيل الباس الملكي مجاناً — هدية العرض','good');render();return}
-  S.gems-=PASS_GEMS;S.pass=true;S.pBuys=(S.pBuys||0)+1;let m2='👑 تم تفعيل الباس الملكي';if(S.pBuys>=2){S.pFree=true;m2+=' — 🎁 الباس القادم مجاني!'}save();hud();toast(m2,'good');render();return}
+  if(S.gems<PASS_GEMS){toast('تحتاج '+PASS_GEMS+' 💎 — رصيدك '+fmt(S.gems),'bad');openGems();return}
+  S.gems-=PASS_GEMS;S.pass=true;save();hud();toast('👑 تم تفعيل الباس الملكي','good');render();return}
  if(d.gms!==undefined){const i=+d.gms,m=GMMS[i];if(m&&S.gemTotal>=m.need&&!S.gmClaimed.includes(i)){S.gmClaimed.push(i);giveRew(m.r);save();hud();toast('🎁 '+rewTxt(m.r),'good');render()}return}
  if(d.gdev){if(!devOK)return;
   if(d.gdev==='gen'){const idx=+$('gmP').value,n=Math.max(1,Math.min(50,+$('gmN').value||1)),L=[];for(let i=0;i<n;i++)L.push(gmFmtCode(gmMake(idx)));gmGen=(gmGen?gmGen+'\n':'')+GMPACKS[idx].g+'💎 → '+L.join('\n'+GMPACKS[idx].g+'💎 → ');render();return}
