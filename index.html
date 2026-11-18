@@ -189,6 +189,54 @@ html.sh .crest{width:30px;height:30px;font-size:17px}html.sh .pill{padding:2px 1
 .cm b{color:var(--gold2);font-size:12px;display:block}.cm i{color:var(--dim);font-size:10px;font-style:normal}.crow{display:flex;gap:6px;margin-top:8px}.crow input{flex:1;min-width:0}
 
 html.pr{overflow:hidden;background:#000}html.pr body{position:fixed!important;top:0;left:var(--pwpx);width:calc(var(--vw)*100)!important;height:calc(var(--vh)*100)!important;margin:0;transform:rotate(90deg);transform-origin:0 0;overflow:hidden}
+
+/* ===== تصميم جديد ===== */
+:root{--bg1:#112238;--bg2:#0a1524;--stroke:rgba(255,255,255,.1);--soft:rgba(255,255,255,.05)}
+*{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.25) transparent}
+.glass{background:rgba(11,22,38,.82);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid var(--stroke);box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.lvl{border-radius:18px;padding:5px 14px 5px 12px}
+.crest{border-radius:50%;width:38px;height:38px;border:2px solid var(--gold);box-shadow:none;font-size:20px}
+.pill{border-radius:999px;min-width:86px}
+.power{background:rgba(120,24,14,.88);border:1px solid rgba(255,140,110,.4);border-radius:16px;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.atk{border-radius:999px;border:0;padding:10px 26px;font-size:21px;box-shadow:0 6px 18px rgba(238,91,69,.45)}
+.atk:active{transform:scale(.96);box-shadow:0 2px 8px rgba(238,91,69,.4)}
+.ib{width:54px;border-radius:16px;font-size:11px;color:#cdd9e6;padding:6px 2px 4px}
+.ib span{font-size:22px}
+.ib.pass{border-color:rgba(242,189,82,.7);box-shadow:0 0 12px rgba(242,189,82,.3)}
+.zoom button{border-radius:50%}
+#chatB{position:absolute;left:calc(12px + env(safe-area-inset-left,0px));bottom:calc(76px + env(safe-area-inset-bottom,0px));width:40px;height:40px;border-radius:50%;font-size:18px;display:grid;place-items:center;z-index:6;cursor:pointer}
+#chatB .d{position:absolute;top:1px;right:1px;width:11px;height:11px;border-radius:50%;background:var(--ember);display:none}
+#chatB.dot .d{display:block}
+.ov{background:rgba(3,8,16,.6);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.win{background:linear-gradient(180deg,var(--bg1),var(--bg2));border:1px solid color-mix(in srgb,var(--c) 50%,transparent);border-radius:24px;box-shadow:0 24px 60px rgba(0,0,0,.6),0 0 0 1px rgba(0,0,0,.4)}
+.ov.full{padding:6px}
+.win.fs{width:min(980px,calc(var(--vw,1vw)*96));height:calc(100% - 4px);max-height:none;border-radius:24px;border-width:1px}
+.wh{background:transparent;border-bottom:1px solid var(--stroke);padding:10px 16px}
+.wh h2{font-size:22px}
+.wh #wi{width:40px;height:40px;display:grid;place-items:center;border-radius:12px;background:color-mix(in srgb,var(--c) 24%,transparent);font-size:22px!important}
+.x{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.08);font-size:15px}
+.win.fs .x{width:40px;height:40px;font-size:17px}
+.wb{padding:14px 16px}
+.wb.grid{grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:10px}
+.card{background:var(--soft);border:1px solid var(--stroke);border-radius:16px;padding:10px 12px;gap:12px}
+.card.rar{border-color:var(--rc);box-shadow:none;background:linear-gradient(180deg,color-mix(in srgb,var(--rc) 14%,transparent),var(--soft))}
+.card .e{background:rgba(255,255,255,.06);border-radius:14px}
+.card b{font-size:15px}.card small{line-height:1.55}
+.bt{border-radius:999px;padding:8px 16px;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.bt.r,.bt.j{box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.bt:active{transform:scale(.96)}
+.bt.g{background:rgba(255,255,255,.1)}
+.stab,.tabs2 button{border-radius:999px}
+input[type=text]{border-radius:12px;padding:10px;background:rgba(0,0,0,.25);border:1px solid var(--stroke)}
+.toast{border-radius:14px;background:rgba(11,22,38,.96)}
+.gc,.stbox,.pwr div,.lockbox{border-radius:16px}
+/* الشات: لوحة جانبية صغيرة لا تغطي الشاشة */
+.ov.side{background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none;pointer-events:none;align-items:end;padding:0 10px calc(74px + env(safe-area-inset-bottom,0px)) 10px}
+.ov.side .win{pointer-events:auto;justify-self:right;width:min(330px,46vw);height:auto;max-height:calc(var(--vh,1vh)*70);border-radius:20px}
+.ov.side .wb{padding:10px}
+.ov.side .chl{max-height:calc(var(--vh,1vh)*32);min-height:110px}
+.trb{margin-inline-start:6px;font-size:12px;opacity:.65;padding:0 3px}
+.trt{margin-top:4px;padding-top:4px;border-top:1px dashed rgba(255,255,255,.2);color:#bfe9ff;font-size:12px}
 </style>
 </head>
 <body>
@@ -203,6 +251,7 @@ html.pr{overflow:hidden;background:#000}html.pr body{position:fixed!important;to
 </div>
 <canvas id="mini" class="glass" width="132" height="132" hidden></canvas>
 <div class="zoom"><button class="glass" id="zin" aria-label="تكبير">＋</button><button class="glass" id="zout" aria-label="تصغير">－</button><button class="glass" id="zmap" aria-label="خريطة العالم">🗺️</button></div>
+<button class="glass" id="chatB" data-w="chat" aria-label="شات">💬<i class="d"></i></button>
 <div class="inc" id="inc" hidden></div>
 
 <div class="upd glass" id="upd" hidden><span id="updT"></span><button class="bt j" id="updB">⬇️ تحديث</button><button class="x" id="updX" aria-label="إغلاق">✕</button></div>
@@ -215,7 +264,7 @@ html.pr{overflow:hidden;background:#000}html.pr body{position:fixed!important;to
   <button class="ib glass" data-w="mis" id="bMis"><i class="d"></i><span>📜</span>مهام</button>
   <button class="ib glass" data-w="events"><span>📅</span>أحداث</button>
   <button class="ib glass" data-w="shop"><span>🏪</span>متجر</button>
-  <button class="ib glass" data-w="chat"><span>💬</span>شات</button>
+  
  </div>
 </div>
 </div>
@@ -359,7 +408,7 @@ function collect(k){if(R3){openWin('gather');return}const v=Math.floor(ready(k))
 function mp(k,n=1){S.m[k]=(S.m[k]||0)+n;if(['hunt','cave','win','train','collect','tower'].includes(k)){S.ev[k]=(S.ev[k]||0)+n}}
 function hud(){$('kName').textContent=S.name;$('lv').textContent='المستوى '+S.lvl;$('xp').style.width=(S.exp/(100*S.lvl)*100)+'%';$('rG').textContent=fmt(S.gold);$('rW').textContent=fmt(S.wood);$('rS').textContent=fmt(S.stone);$('pw').textContent=fmt(power());
  $('net').textContent=netErr?'🔴 '+netErr:online&&loadedP?'🟢 '+players.filter(p=>p.id!==uid&&Date.now()-p.at<864e5).length+' لاعب':'🟡 يتصل...';
- $('bMis').classList.toggle('dot',MIS.some(m=>(S.m[m[0]]||0)>=m[2]&&!S.m.got[m[0]]));$('bPass').classList.toggle('dot',passClaimable())}
+ $('bMis').classList.toggle('dot',MIS.some(m=>(S.m[m[0]]||0)>=m[2]&&!S.m.got[m[0]]));$('bPass').classList.toggle('dot',passClaimable());try{$('chatB').classList.toggle('dot',dmUnread())}catch(e){}}
 
 let netErr='',loadedP=false,loadedA=false;
 async function net(){try{
@@ -377,13 +426,13 @@ async function net(){try{
  const bad=e=>{netErr=e.code||'error';online=false;hud()};
  db.collection('players').onSnapshot(s=>{online=true;loadedP=true;netErr='';players=s.docs.map(x=>({id:x.id,...x.data()}));hud();refresh()},bad);
  db.collection('alliances').onSnapshot(s=>{allies=s.docs.map(x=>({id:x.id,...x.data()}));loadedA=true;if(S.ally&&S.allyInfo&&!allies.find(a=>a.id===S.ally))db.collection('alliances').doc(S.ally).set({name:S.allyInfo.name,owner:uid}).catch(()=>{});refresh()},bad);
- db.collection('raids').where('to','==',uid).limit(80).onSnapshot(s=>{for(const x of s.docs){const r=x.data();if(r.k==='inc'){if(r.eta>Date.now()&&!INC.find(i=>i.id===x.id)){INC.push({id:x.id,name:r.name,from:r.from,eta:r.eta});if(!incSeen[x.id]){incSeen[x.id]=1;sfxHorn();toast('⚠️ '+r.name+' يهاجمك! يصل جيشه خلال '+msT(r.eta-Date.now()),'bad')}}continue}if(S.applied.includes(x.id))continue;S.applied.push(x.id);S.applied=S.applied.slice(-60);
+ db.collection('raids').where('to','==',uid).limit(80).onSnapshot(s=>{for(const x of s.docs){const r=x.data();if(r.k==='reset'){if(r.t>(S.resetSeen||0))applyReset(r.t);continue}if(r.t&&r.t<=(S.resetSeen||0))continue;if(r.k==='inc'){if(r.eta>Date.now()&&!INC.find(i=>i.id===x.id)){INC.push({id:x.id,name:r.name,from:r.from,eta:r.eta});if(!incSeen[x.id]){incSeen[x.id]=1;sfxHorn();toast('⚠️ '+r.name+' يهاجمك! يصل جيشه خلال '+msT(r.eta-Date.now()),'bad')}}continue}if(S.applied.includes(x.id))continue;S.applied.push(x.id);S.applied=S.applied.slice(-60);
  if(r.share){S.gold+=r.loot;S.troops+=r.t||0;toast('🚩 حصتك من الحشد: +'+fmt(r.loot)+' 🪙','good');save();hud();continue}
  const l=Math.min(r.loot,S.gold);S.gold-=l;if(r.t>(S.seen||0))toast('🏴 '+r.name+' نهب منك '+fmt(l)+' 🪙','bad');S.seen=Date.now()}save();hud()},bad);
  chatListen();
  db.collection('rallies').where('t','>',Date.now()-3600e3).limit(60).onSnapshot(s=>{RLS=s.docs.map(x=>({id:x.id,...x.data()}));if(cur==='ally')render()},()=>{});
  db.collection('rallyjoins').where('t','>',Date.now()-3600e3).limit(200).onSnapshot(s=>{RJS=s.docs.map(x=>({id:x.id,...x.data()}));if(cur==='ally')render()},()=>{});
- db.collection('events').where('end','>',Date.now()-6048e5).limit(30).onSnapshot(s=>{EVL=s.docs.map(x=>({id:x.id,...x.data()}));if(cur==='events')render()},()=>{});
+ db.collection('events').where('end','>',Date.now()-6048e5).limit(30).onSnapshot(s=>{EVL=s.docs.map(x=>({id:x.id,...x.data()}));S.evBase=S.evBase||{};EVL.forEach(e=>{if(S.evBase[e.id]===undefined)S.evBase[e.id]=S.ev[e.type]||0});save();if(cur==='events')render()},()=>{});
  db.collection('config').doc('update').onSnapshot(d=>{if(d.exists())showUpd(d.data())},()=>{});
  sync(true);hud()}catch(e){netErr=e.code||String(e.message||e).slice(0,40);online=false;hud()}}
 function sync(f){if(!db||(!dirty&&!f)||Date.now()-lastSync<4000)return;lastSync=Date.now();dirty=false;db.collection('players').doc(uid).set({name:S.name,power:Math.floor(power()*(1+.15*Math.min(5,shieldN(S)))),gold:Math.floor(S.gold),lvl:S.lvl,wall:S.wall,ally:S.ally,at:Date.now()}).then(()=>{if(online)netErr=''}).catch(e=>{netErr='write:'+(e.code||'error');hud()})}
@@ -490,11 +539,11 @@ const WN={attack:['⚔️','ساحة الهجوم','#ee5b45'],hunt:['🐲','صي
 const GRIDK=['attack','worldmap','heroes','mis','shop','ally','cave','tower','res','skins','dev'];
 let cur=null,arg=null,hl=1;
 function openWin(k,a){if(battle||!WN[k])return;cur=k;arg=a;const w=WN[k]||['🌐','معلومات','#f2bd52'];
- const vid=k==='video',fs=!vid&&k!=='result'&&k!=='name';
+ const vid=k==='video',side=k==='chat',fs=!vid&&!side&&k!=='result'&&k!=='name';$('win').classList.toggle('side',side);$('ov').classList.toggle('side',side);
  $('win').classList.toggle('full',vid);$('win').classList.toggle('fs',fs);$('ov').classList.toggle('full',vid||fs);$('wb').classList.toggle('grid',GRIDK.includes(k));
  $('win').style.setProperty('--c',w[2]);$('wi').textContent=w[0];$('wt').textContent=w[1];$('ov').classList.add('on');render()}
-function closeWin(){cur=null;$('wb').innerHTML='';$('wb').classList.remove('grid');$('win').classList.remove('full');$('win').classList.remove('fs');$('ov').classList.remove('full');$('ov').classList.remove('on')}
-function refresh(){buildWorld();const ae=document.activeElement;if(cur&&cur!=='name'&&cur!=='hunt'&&!(ae&&ae.tagName==='INPUT'))render()}
+function closeWin(){cur=null;$('wb').innerHTML='';$('wb').classList.remove('grid');$('win').classList.remove('full');$('win').classList.remove('fs');$('ov').classList.remove('full');$('ov').classList.remove('side');$('win').classList.remove('side');$('ov').classList.remove('on')}
+function refresh(){buildWorld();const ae=document.activeElement;if(cur&&cur!=='name'&&cur!=='hunt'&&cur!=='dev'&&!(ae&&(ae.tagName==='INPUT'||ae.tagName==='SELECT')))render()}
 const card=(e,t,s,b,st)=>`<div class="card ${st?'rar':''}" style="${st||''}"><div class="e">${e}</div><div class="g"><b>${t}</b><small>${s}</small></div>${b||''}</div>`;
 const dif=(p,e)=>{const r=p/e;return r>1.25?'سهل ✅':r>.85?'متكافئ ⚖️':'صعب ⚠️'};
 const SKBG={default:['#79b3ee','#d6ecff','#58a050'],jade:['#8fd6b8','#eafff4','#4fa57d'],gold:['#f3d58a','#fff4cf','#74a84e'],fire:['#2a0e0a','#8c2a14','#3a2a2a'],shadow:['#0e0820','#3a1a60','#1a1430'],ice:['#6aa2e6','#eaf7ff','#e8f4ff'],inferno:['#160503','#6a1a08','#2a1008'],royal:['#3a1f6a','#f2c860','#6a5aa0']};
@@ -546,7 +595,7 @@ function roomHTML(){const x=HER.find(v=>v[0]===arg.id),lv=S.hs[x[0]],r=RK[x[2]],
   const spNote=HSPEC[x[0]]?`<div class="card rar" style="--rc:var(--gold2)"><div class="e">✨</div><div class="g"><b>الخاصية</b><small>${HSPEC[x[0]].d}</small></div></div>`:'';
  const stats=`<div class="stbox">${bar('⚔️ الهجوم',tot*.55+gp*.2,'#ee5b45')}${bar('🛡️ الدفاع',tot*.3+gp*.15,'#5db4f0')}${bar('❤️ الصحة',tot*1.4,'#46c792')}
   <div class="elnote">${EL[x[5]]} <b>${x[5]}</b> — قوي ضد: <b>${beats.map(e=>EL[e]+' '+e).join('، ')||'—'}</b> · ضعيف أمام: <b>${weak.map(e=>EL[e]+' '+e).join('، ')||'—'}</b></div></div>`;
- const acts=`<div class="rbar">${lv?`<button class="bt ${on?'g':'j'} s" data-act="${x[0]}">${on?'⏸ إيقاف':'▶ تفعيل'}</button><button class="bt s" data-up="${x[0]}" ${S.gold<x[4]*lv*6?'disabled':''}>⬆ ترقية ${fmt(x[4]*lv*6)}🪙</button>`:`<button class="bt j s" data-rec="${x[0]}" ${S.gold<r[2]?'disabled':''}>🎖️ تجنيد ${fmt(r[2])}🪙</button>`}<button class="bt g s" data-hview="1">${heroView==='3d'?'🖼️ صورة':'🧊 مجسم'}</button><button class="bt g s" data-vid="${x[0]}">🎬 عرض</button>${dl('glb_'+x[0],'مجسم GLB')}${dl('img_'+x[0],'الصورة')}${dl('vid_'+x[0],'الفيديو')}<button class="bt g s" data-w="heroes">↩ رجوع</button></div>`;
+ const acts=`<div class="rbar">${lv?`<button class="bt ${on?'g':'j'} s" data-act="${x[0]}">${on?'⏸ إيقاف':'▶ تفعيل'}</button><button class="bt s" data-up="${x[0]}" ${S.gold<x[4]*lv*6?'disabled':''}>⬆ ترقية ${fmt(x[4]*lv*6)}🪙</button>`:`<button class="bt j s" data-rec="${x[0]}" ${S.gold<r[2]?'disabled':''}>🎖️ تجنيد ${fmt(r[2])}🪙</button>`}${dl('glb_'+x[0],'مجسم GLB')}<button class="bt g s" data-w="heroes">↩ رجوع</button></div>`;
  const tabs=`<div class="tabs2"><button class="${rTab==='weapon'?'on':''}" data-rtab="weapon">⚔️ الأسلحة (${GEAR.weapon.length})</button><button class="${rTab==='armor'?'on':''}" data-rtab="armor">🛡️ الدروع (${GEAR.armor.length})</button></div>`;
  const cat=GEAR[rTab],curIt=gearFind(rTab,eq[rTab]);let list;
  if(!lv)list=`<div class="lockbox"><span>🔒</span>الغرفة مقفلة — جنّد البطل أولاً لتجهيز السلاح والدرع</div>`;
@@ -603,7 +652,7 @@ function render(){let h='';const P=power();
 
  if(cur==='events'){const now=Date.now(),L=EVL.filter(e=>e.end>now&&e.start<now);
   h='<small style="color:var(--dim)">أحداث تتجدد أسبوعياً — أكمل الهدف واستلم الجائزة قبل نهاية العدّاد</small>'+
-  (L.length?L.map(e=>{const cur=Math.min(e.goal,S.ev[e.type]||0),done=cur>=e.goal,cl=S.evCl[e.id];
+  (L.length?L.map(e=>{const cur=Math.min(e.goal,evProg(e)),done=cur>=e.goal,cl=S.evCl[e.id];
    return card(e.icon||'📅',esc(e.title)+' <span class="tag" style="color:var(--gold2)">'+((EVTT[e.type])||'')+'</span>',esc(e.desc||'')+`<br>التقدم: ${cur}/${e.goal} · ينتهي خلال ${msT(e.end-now)} — الجائزة: ${e.rew&&e.rew.g?fmt(e.rew.g)+' 🪙':''}${e.rew&&e.rew.t?' + '+e.rew.t+' ⚔️':''}`,
    cl?'<span class="tag">✅ استلمتها</span>':done?`<button class="bt j" data-evc="${esc(e.id)}">🎁 استلام</button>`:'<span class="tag">⏳</span>')}).join(''):'<small>لا توجد أحداث نشطة حالياً — تعال لاحقاً.</small>')}
  if(cur==='mis')h=MIS.map(m=>{const v=Math.min(m[2],S.m[m[0]]||0),ok=v>=m[2],got=S.m.got[m[0]];return card(got?'✅':'📜',m[1],`${v}/${m[2]} — الجائزة ${fmt(m[3])} 🪙<div class="bar"><i style="width:${v/m[2]*100}%"></i></div>`,`<button class="bt j" data-mis="${m[0]}" ${!ok||got?'disabled':''}>استلم</button>`)}).join('')
@@ -611,9 +660,9 @@ function render(){let h='';const P=power();
  if(cur==='res'){const L=resItems(),nok=L.filter(i=>RSTAT[i.k]==='ok').length;
   h=`<div class="card"><div class="e">📦</div><div class="g"><b>موارد اللعبة — محمّل ${nok}/${L.length}</b><small>حمّل فقط ما تريده: ملفاً واحداً أو مجموعة أو الكل. الفيديوهات تعمل بالبث حتى بدون تحميل.</small></div></div>`+
    (DLQ.run?`<div class="prog"><i style="width:${DLQ.n/DLQ.t*100}%"></i></div><small style="color:var(--dim)">جارٍ التحميل ${DLQ.n}/${DLQ.t}</small>`:'')+
-   `<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="bt j" data-dlg="all" ${DLQ.run?'disabled':''}>⬇️ الكل</button><button class="bt" data-dlg="img" ${DLQ.run?'disabled':''}>🖼️ الصور</button><button class="bt" data-dlg="vid" ${DLQ.run?'disabled':''}>🎬 الفيديوهات</button><button class="bt" data-dlg="glb" ${DLQ.run?'disabled':''}>🧊 المجسمات</button><button class="bt" data-dlg="snd" ${DLQ.run?'disabled':''}>🔊 الأصوات</button><button class="bt g" data-fs="1">⛶ ملء الشاشة</button></div>`+
+   `<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="bt j" data-dlg="all" ${DLQ.run?'disabled':''}>⬇️ الكل</button><button class="bt" data-dlg="glb" ${DLQ.run?'disabled':''}>🧊 المجسمات</button><button class="bt" data-dlg="snd" ${DLQ.run?'disabled':''}>🔊 الأصوات</button><button class="bt g" data-fs="1">⛶ ملء الشاشة</button></div>`+
    L.map(i=>card(i.t==='img'?(HI[i.id]?`<img src="${HI[i.id].src}" alt="">`:'🖼️'):i.t==='vid'?'🎬':i.t==='glb'?'🧊':'🔊',esc(i.label),dlTxt(i.k),`<button class="bt ${RSTAT[i.k]==='ok'?'g':''} s" data-dlk="${i.k}" ${RSTAT[i.k]==='busy'?'disabled':''}>${RSTAT[i.k]==='ok'?'↻':'⬇️'}</button>`)).join('')}
- if(cur==='name')h=`<input type="text" id="nm" maxlength="18" value="${esc(S.name)}"><button class="bt" data-nm="1">حفظ</button><small style="color:var(--dim);text-align:center">معرّفك: ${esc(uid)}</small><button class="bt g" data-w="skins">🏰 سكانات القلعة</button><button class="bt g" data-w="res">📦 موارد اللعبة</button>`
+ if(cur==='name')h=`<input type="text" id="nm" maxlength="18" value="${esc(S.name)}"><button class="bt" data-nm="1">حفظ</button><small style="color:var(--dim);text-align:center">معرّفك: ${esc(uid)}</small><div class="rbar" style="justify-content:center">${Object.keys(LANGS).map(k=>`<button class="bt ${LANG===k?'j':'g'}" data-lang="${k}">🌐 ${LANGS[k]}</button>`).join('')}</div><button class="bt g" data-w="skins">🏰 سكانات القلعة</button><button class="bt g" data-w="res">📦 موارد اللعبة</button>`
  if(cur==='result'){const a=arg;h=`<div style="text-align:center;padding:10px"><div style="font-size:64px">${a.win?'🏆':'💀'}</div><h2 style="font-family:var(--fd);font-weight:400;font-size:24px;color:${a.win?'var(--gold2)':'var(--ember)'}">${a.win?'نصر':'هزيمة'} أمام ${esc(a.t)}</h2><p style="margin:8px 0">${a.msg}</p><button class="bt" data-close="1" style="width:100%">متابعة</button></div>`}
  if(cur==='ally'){const mine=S.ally&&allyOf(S.ally);if(db&&!loadedA&&!mine)h='<div class="card"><div class="e">⏳</div><div class="g"><b>جارٍ تحميل التحالفات...</b><small>انتظر ثوانٍ، الاتصال بالخادم أبطأ من المعتاد</small></div></div>';else if(mine){const ms=members(mine.id);
   const myR=RLS.filter(r=>ms.some(m=>m.id===r.by)&&r.eta>Date.now());
@@ -635,6 +684,8 @@ document.addEventListener('click',e=>{const t=e.target.closest('button,#lvlBox')
  if(d.rtab){rTab=d.rtab;render();return}
  if(d.hview){heroView=heroView==='3d'?'img':'3d';render();return}
  if(d.dev){devAct(d.dev);return}
+ if(d.lang){setLang(d.lang);return}
+ if(d.trm){chatTranslate(d.trm);return}
  if(d.ctab){chatTab=d.ctab;dmWith=null;render();return}
  if(d.dmw){dmWith=d.dmw;chatTab='d';S.dmSeen=S.dmSeen||{};S.dmSeen[d.dmw]=Date.now();render();return}
  if(d.cback){dmWith=null;render();return}
@@ -673,7 +724,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('button,#lvlBox')
  if(t.id==='mute'){S.mute=!S.mute;save();applyMute();toast(S.mute?'🔇 تم كتم الصوت':'🔊 تم تشغيل الصوت');return}
  if(t.id==='updB'){if(UPD&&UPD.url){const w=window.open(UPD.url,'_blank');if(!w)location.href=UPD.url}return}if(t.id==='updX'){$('upd').hidden=true;return}
  if(d.vid){vsrc(d.vid).then(src=>openWin('video',{id:d.vid,src}));return}
- if(d.fs){try{document.documentElement.requestFullscreen()}catch(e){toast('اضبط ملء الشاشة من إعدادات Median','bad')}return}if(t.id==='wx'||d.close){closeWin();return}if(t.id==='lvlBox'){openWin('name');return}if(t.id==='bAtk'){openWin('attack');return}if(d.w){openWin(d.w);return}
+ if(d.fs){try{document.documentElement.requestFullscreen()}catch(e){toast('اضبط ملء الشاشة من إعدادات Median','bad')}return}if(t.id==='wx'||d.close){closeWin();return}if(t.id==='lvlBox'){openWin('name');return}if(t.id==='bAtk'){openWin('attack');return}if(d.w){if(d.w==='chat'&&cur==='chat'){closeWin();return}openWin(d.w);return}
  if(d.pbuy){if(PAY.url){const w=window.open(PAY.url,'_blank');if(!w)location.href=PAY.url}else toast('لم يتم ربط بوابة الدفع بعد — ضع الرابط في PAY.url','bad');return}
  if(d.pcode){const v=(($('passCode')||{}).value||'').trim().toUpperCase();if(PAY.codes.includes(v)){S.pass=true;toast('👑 تم تفعيل الباس الملكي','good')}else toast('❌ كود غير صحيح','bad')}
  if(d.plv){const lv=passLv();if(lv<PASS_MAX&&S.gold>=8000){S.gold-=8000;S.pxp=(lv+1)*PASS_STEP;toast('👑 مستوى الباس '+(lv+1),'good')}}
@@ -711,7 +762,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('button,#lvlBox')
  if(d.buy==='p'&&S.gold>=6000){S.gold-=6000;S.wood+=500;S.stone+=300}
  if(d.buy==='s'&&S.gold>=4000){S.gold-=4000;for(const k in S.t)S.t[k]=0}
  if(d.buy==='gpkg'&&S.wood>=10000){S.wood-=10000;S.gold+=15000;toast('تم شراء صندوق الذهب بنجاح','good');}
- if(d.evc){const e=EVL.find(x=>x.id===d.evc);if(e&&!S.evCl[e.id]&&(S.ev[e.type]||0)>=e.goal){S.evCl[e.id]=1;giveRew(e.rew||{});toast('🎁 حصلت على جائزة الحدث!','good')}}
+ if(d.evc){const e=EVL.find(x=>x.id===d.evc);if(e&&!S.evCl[e.id]&&evProg(e)>=e.goal){S.evCl[e.id]=1;giveRew(e.rew||{});toast('🎁 حصلت على جائزة الحدث!','good')}}
  if(d.mis){const m=MIS.find(x=>x[0]===d.mis);if(m&&(S.m[m[0]]||0)>=m[2]&&!S.m.got[m[0]]){S.m.got[m[0]]=1;S.gold+=m[3];gain(20);toast('+'+fmt(m[3])+' 🪙','good')}}
  if(d.nm){const v=$('nm').value.trim().slice(0,18);if(v){S.name=v;save();hud();closeWin();return}}
  if(d.mk){const v=$('an').value.trim().slice(0,16);if(!v)return;if(!db){toast('التحالفات تحتاج اتصالاً بالإنترنت','bad');return}const id='a'+Date.now().toString(36);S.ally=id;S.allyInfo={id,name:v};mp('ally');save();sync(true);hud();render();toast('🏯 تم إنشاء التحالف','good');db.collection('alliances').doc(id).set({name:v,owner:uid}).catch(e=>{S.ally='';S.allyInfo=null;save();hud();render();toast('تعذّر الإنشاء: '+(e.code||'خطأ'),'bad')});return}
@@ -813,7 +864,7 @@ const hm_=t=>{try{return new Date(t).toLocaleTimeString('ar',{hour:'2-digit',min
 function chatMsgs(){let L;if(chatTab==='d'){if(!dmWith)return[];L=DMi.concat(DMo).filter(m=>m.from===dmWith||m.to===dmWith)}
  else{const room=chatTab==='a'?S.ally:'g';L=CH.filter(m=>(m.room||'g')===room)}
  const seen={};return L.filter(m=>{if(seen[m.id])return false;seen[m.id]=1;return true}).sort((a,b)=>a.t-b.t).slice(-80)}
-function chatMsgsHTML(){const L=chatMsgs();return L.length?L.map(m=>`<div class="cm ${(m.uid||m.from)===uid?'me':''}"><b>${esc(m.name||'؟')}</b>${esc(m.text)}<i> ${hm_(m.t)}</i></div>`).join(''):'<small style="color:var(--dim)">لا توجد رسائل بعد — ابدأ المحادثة 👋</small>'}
+function chatMsgsHTML(){const L=chatMsgs();return L.length?L.map(m=>`<div class="cm ${(m.uid||m.from)===uid?'me':''}"><b>${esc(m.name||'؟')}</b>${esc(m.text)}<i> ${hm_(m.t)}</i><button class="trb" data-trm="${esc(m.id)}" aria-label="ترجمة">🌐</button>${TRC[m.id]?`<div class="trt">🌐 ${esc(TRC[m.id])}</div>`:''}</div>`).join(''):'<small style="color:var(--dim)">لا توجد رسائل بعد — ابدأ المحادثة 👋</small>'}
 function dmPeers(){const mp_={};DMi.forEach(m=>{const o=mp_[m.from]||(mp_[m.from]={id:m.from,name:m.name,t:0,last:''});if(m.t>o.t){o.t=m.t;o.last=m.text;o.name=m.name}});
  DMo.forEach(m=>{const o=mp_[m.to]||(mp_[m.to]={id:m.to,name:m.toName,t:0,last:''});if(m.t>o.t){o.t=m.t;o.last='أنت: '+m.text}if(!o.name)o.name=m.toName});
  return Object.values(mp_).sort((a,b)=>b.t-a.t)}
@@ -851,7 +902,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target&&e.target.i
 let devOK=false;
 const DEVH=1662313701;
 const devHash=s=>{let h=2166136261;s=String(s||'').trim().toLowerCase();for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0}return h>>>0};
-function devHTML(){const b=(a,t,c)=>`<button class="bt ${c||''}" data-dev="${a}">${t}</button>`;
+function devHTML(){return resetConfirmHTML()+devHTML0()+resetListHTML()}
+function devHTML0(){const b=(a,t,c)=>`<button class="bt ${c||''}" data-dev="${a}">${t}</button>`;
  return card('🛠️','لوحة المطوّر','مخفية — فُتحت بالكود الخاص · كل شيء هنا مجاني',b('close','إغلاق','g'),'--rc:#a672e8')+
  card('🪙','الذهب','أضف ذهباً فوراً',b('g1','+1م')+b('g2','+100م','j')+b('g3','+1مليار','r'))+
  card('🪵','الخشب والحجر','أضف موارد البناء',b('w1','+1م 🪵')+b('s1','+1م 🪨','j'))+
@@ -869,7 +921,24 @@ function devHTML(){const b=(a,t,c)=>`<button class="bt ${c||''}" data-dev="${a}"
   <div style="display:flex;gap:6px"><input type="number" id="evR" min="0" value="50000" style="flex:1;padding:9px;border-radius:9px;background:#0a1626;color:var(--ink);border:1px solid var(--line)" placeholder="الجائزة 🪙">
   <button class="bt j" data-dev="evpub">🚀 نشر</button></div>`}
 
+let devPend=null;
+function applyReset(t){const nm=S.name;if(battle){battle=null;stopBattle3D()}S=fresh();S.name=nm;S.divs=[['bella'],[],[],[]];S.resetSeen=t;syncAct();save();sync(true);hud();if(cur)closeWin();toast('♻️ تمت إعادة حسابك من الصفر بواسطة المطوّر','bad')}
+function resetPlayers(list){if(!db){toast('يحتاج اتصال بالخادم','bad');return}
+ const now=Date.now();let n=0;
+ list.forEach(p=>{db.collection('raids').doc('reset_'+p.id).set({to:p.id,k:'reset',t:now}).catch(()=>{});
+  db.collection('players').doc(p.id).set({name:p.name||'لاعب',power:0,gold:3000,lvl:1,wall:0,ally:'',at:now}).catch(()=>{});n++});
+ toast('♻️ تم إرسال أمر التصفير إلى '+n+' لاعب','good')}
+const resetTargets=()=>players.filter(p=>p.id!==uid).sort((a,b)=>(b.power||0)-(a.power||0));
+function resetConfirmHTML(){if(!devPend)return'';const L=resetTargets(),nm=devPend.t==='all'?'كل اللاعبين ('+L.length+')':esc(devPend.p.name||'لاعب');
+ return `<div class="card rar" style="--rc:#ee5b45"><div class="e">⚠️</div><div class="g"><b>هل أنت متأكد؟</b><small>سيتم تصفير ${nm} نهائياً ولا يمكن التراجع</small></div><button class="bt r" data-dev="rsyes">نعم، صفّر</button><button class="bt g" data-dev="rsno">إلغاء</button></div>`}
+function resetListHTML(){const L=resetTargets();
+ return card('♻️','تصفير اللاعبين','يرجّع اللاعب حساب جديد (يحتفظ بالاسم) — يُنفَّذ عند فتح اللاعب للعبة',`<button class="bt r" data-dev="rsall" ${L.length?'':'disabled'}>تصفير الكل (${L.length})</button>`,'--rc:#ee5b45')+
+ L.map(p=>card('🏰',esc(p.name||'لاعب'),'قوة '+fmt(p.power||0)+' · لفل '+(p.lvl||1)+' · 🪙 '+fmt(p.gold||0),`<button class="bt r" data-dev="rs:${esc(p.id)}">♻️ تصفير</button>`)).join('')}
 function devAct(a){if(!devOK)return;
+ if(a.startsWith('rs:')){const p=players.find(x=>x.id===a.slice(3));if(p){devPend={t:'one',p};render();$('wb').scrollTop=0}return}
+ if(a==='rsall'){if(resetTargets().length){devPend={t:'all'};render();$('wb').scrollTop=0}return}
+ if(a==='rsno'){devPend=null;render();return}
+ if(a==='rsyes'){const d=devPend;devPend=null;if(d)resetPlayers(d.t==='all'?resetTargets():[d.p]);render();return}
  if(a==='close'){closeWin();return}
  if(a==='g1')S.gold+=1e6;if(a==='g2')S.gold+=1e8;if(a==='g3')S.gold+=1e9;
  if(a==='w1')S.wood+=1e6;if(a==='s1')S.stone+=1e6;if(a==='t1')S.troops+=10000;if(a==='lvl')S.lvl+=10;
@@ -881,7 +950,7 @@ function devAct(a){if(!devOK)return;
  if(a==='evpub'){const t=($('evT')||{}).value,ty=($('evY')||{}).value||'hunt',g=Math.max(1,+($('evG')||{}).value||5),rw=Math.max(0,+($('evR')||{}).value||0);
   if(!db){toast('نشر الأحداث يحتاج اتصالاً بالخادم','bad');return}
   if(!t||!t.trim()){toast('اكتب عنوان الحدث','bad');return}
-  const id='e'+Date.now().toString(36);db.collection('events').doc(id).set({title:t.trim(),icon:'📅',desc:'حدث خاص من المطور — أكمل الهدف واستلم جائزتك',type:ty,goal:g,rew:{g:rw,t:0},start:Date.now(),end:Date.now()+7*864e5}).then(()=>toast('📅 تم نشر الحدث لكل اللاعبين','good')).catch(e=>toast('تعذّر النشر: '+(e.code||'خطأ'),'bad'));return}
+  const id='e'+Date.now().toString(36);db.collection('events').doc(id).set({title:t.trim(),icon:'📅',desc:'حدث خاص من المطور — أكمل الهدف واستلم جائزتك',type:ty,goal:g,rew:{g:rw,t:0},start:Date.now(),end:Date.now()+7*864e5}).then(()=>toast('📅 تم نشر الحدث لكل اللاعبين','good')).catch(e=>toast('تعذّر النشر: '+(e.code==='permission-denied'?'permission-denied — قواعد Firestore تمنع الكتابة على events':(e.code||e.message||'خطأ')),'bad'));return}
  save();hud();if(cur)render();if(a!=='pass')toast('🛠️ تم','good');else applySkin()}
 /* ╔═══════════════ بند 8: مجسمات الأبطال والجيش (ثلاثية الأبعاد) ═══════════════╗ */
 const HG={},ECOL={نار:'#ff6a3a',ماء:'#3d9bf0',أرض:'#9a7b4a',رياح:'#7fe0c0',برق:'#f6d94a',ثلج:'#9fdcff',ظلام:'#8a5ad8',نور:'#ffe9a0',زمن:'#e08ad8',فراغ:'#6a6ab8'};
@@ -1094,7 +1163,9 @@ async function loadArt(){if(!R3)return;
  ks.forEach(k=>new THREE.GLTFLoader().load(ART.buildings[k],gl=>{const g=BG[k];if(!g)return;g.children.forEach(c=>{if(!(c.isSprite||c.isLight||c.userData.keep||c.userData.fx))c.visible=false});const m=normGLB(gl.scene,ART.height[k]||6);m.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});g.add(m)},undefined,()=>{}))}
 
 /* ===== الصوت ===== */
-const SND={music:['music.mp3',.5,1],wall:['wall.mp3',.8,1],hammer:['hammer.mp3',.8],done:['done.mp3',.8],click:['click.mp3',.5],coin:['coin.mp3',.6],horn:['horn.mp3',.8],win:['win.mp3',.8],lose:['lose.mp3',.8]};
+/* ===== موسيقى الخلفية: ضع ملفك بجانب index.html وغيّر الاسم هنا (أو ضع رابطاً مباشراً) ===== */
+const MUSIC_URL='music.mp3';
+const SND={music:[MUSIC_URL,.5,1],wall:['wall.mp3',.8,1],hammer:['hammer.mp3',.8],done:['done.mp3',.8],click:['click.mp3',.5],coin:['coin.mp3',.6],horn:['horn.mp3',.8],win:['win.mp3',.8],lose:['lose.mp3',.8]};
 let AC=null,MG=null,AG=null,AMBI=0,AUD={},lastHam=0,ambOn=false,unlocked=false;
 function audioInit(){unlocked=true;if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();MG=AC.createGain();MG.connect(AC.destination)}catch(e){AC=null}}
  if(AC&&AC.state==='suspended')AC.resume();applyMute();
@@ -1102,7 +1173,9 @@ function audioInit(){unlocked=true;if(!AC){try{AC=new(window.AudioContext||windo
 function applyMute(){const b=$('mute');b.textContent=S.mute?'🔇':'🔊';b.classList.toggle('off',!!S.mute);if(MG)MG.gain.value=S.mute?0:.9;
  for(const k in AUD){try{AUD[k].muted=!!S.mute}catch(e){}}
  if(!S.mute&&unlocked&&AUD.music&&AUD.music.paused)AUD.music.play().catch(()=>{})}
-function startMusic(){const a=AUD.music;if(a){a.muted=!!S.mute;a.play().catch(()=>{})}else synthAmb()}
+function startMusic(){
+ if(!AUD.music){const a=new Audio();a.loop=true;a.volume=.5;a.preload='auto';a.src=MUSIC_URL;a.onerror=()=>{if(AUD.music===a){delete AUD.music;synthAmb()}};AUD.music=a}
+ const a=AUD.music;a.muted=!!S.mute;a.play().catch(()=>{})}
 let NB=null;const noise=()=>{if(!NB){NB=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1}return NB};
 function tone(f,d,type='sine',g=.18,when=0,slide=0){if(!AC)return;const t=AC.currentTime+when,o=AC.createOscillator(),v=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,f+slide),t+d);v.gain.setValueAtTime(g,t);v.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(v);v.connect(MG);o.start(t);o.stop(t+d+.05)}
 function burst(f,d,g=.3,q=1){if(!AC)return;const t=AC.currentTime,s=AC.createBufferSource(),b=AC.createBiquadFilter(),v=AC.createGain();s.buffer=noise();b.type='bandpass';b.frequency.value=f;b.Q.value=q;v.gain.setValueAtTime(g,t);v.gain.exponentialRampToValueAtTime(.0001,t+d);s.connect(b);b.connect(v);v.connect(MG);s.start(t);s.stop(t+d+.05)}
@@ -1128,7 +1201,7 @@ const HI={},VURL={},RSTAT={},DLQ={run:false,n:0,t:0};let bgImg=null;
 const RESMAP=(()=>{try{return JSON.parse(localStorage.getItem('kd_resmap'))||{}}catch(e){return{}}})();
 const saveMap=()=>{try{localStorage.setItem('kd_resmap',JSON.stringify(RESMAP))}catch(e){}};
 const rr=()=>{if(cur==='res'||cur==='heroes'||cur==='room'||cur==='skins')render()};
-function resItems(){const L=[];for(const x of HER){L.push({k:'img_'+x[0],t:'img',id:x[0],label:x[1]+' — صورة'});L.push({k:'vid_'+x[0],t:'vid',id:x[0],label:x[1]+' — فيديو'});L.push({k:'glb_'+x[0],t:'glb',id:x[0],label:x[1]+' — مجسم 3D'})}for(const k in SND)L.push({k:'snd_'+k,t:'snd',id:k,label:'صوت: '+SND[k][0]});return L}
+function resItems(){const L=[];for(const x of HER){L.push({k:'glb_'+x[0],t:'glb',id:x[0],label:x[1]+' — مجسم 3D'})}for(const k in SND)L.push({k:'snd_'+k,t:'snd',id:k,label:'صوت: '+SND[k][0]});return L}
 async function vsrc(id){return VURL[id]||MEDIA.vid(id)}
 async function applyRes(it,src){
  if(it.t==='img'){const im=new Image();await new Promise((ok,er)=>{im.onload=ok;im.onerror=er;im.src=src});HI[it.id]=im}
@@ -1163,7 +1236,7 @@ const CM={},WPOS={},SITES=[];
 
 const MC={};
 const M3=(c,o)=>c&&c.isMaterial?c:o?new THREE.MeshLambertMaterial(Object.assign({color:c},o)):(MC[c]||(MC[c]=new THREE.MeshLambertMaterial({color:c})));
-function lab3(txt,w,h,big){const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');if(big){x.fillStyle='#fff';x.beginPath();x.arc(w/2,h/2,h/2-3,0,7);x.fill();x.font=(h*.6)+'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(txt,w/2,h/2+3)}else{x.fillStyle='rgba(8,18,30,.82)';x.fillRect(3,3,w-6,h-6);x.strokeStyle='#f2bd52';x.lineWidth=4;x.strokeRect(3,3,w-6,h-6);x.fillStyle='#fff';x.font='800 '+(h*.5)+'px Tajawal,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(txt,w/2,h/2+2)}
+function lab3(txt,w,h,big){txt=trans(txt);const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');if(big){x.fillStyle='#fff';x.beginPath();x.arc(w/2,h/2,h/2-3,0,7);x.fill();x.font=(h*.6)+'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(txt,w/2,h/2+3)}else{x.fillStyle='rgba(8,18,30,.82)';x.fillRect(3,3,w-6,h-6);x.strokeStyle='#f2bd52';x.lineWidth=4;x.strokeRect(3,3,w-6,h-6);x.fillStyle='#fff';x.font='800 '+(h*.5)+'px Tajawal,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(txt,w/2,h/2+2)}
  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false}));return sp}
 
 /* ===== تضاريس العالم الكبير ===== */
@@ -1629,6 +1702,89 @@ function frame(t){tickMarch();tickWall();soundTick(t);try{drawHV3(t)}catch(e){}i
  if(fxA>0){cx.fillStyle=`rgba(255,255,255,${fxA*.35})`;cx.fillRect(0,0,W_,H_);fxA-=.05}
  if(!R3||battle){const v=cx.createRadialGradient(W_/2,H_/2,Math.min(W_,H_)*.35,W_/2,H_/2,W_*.72);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.5)');cx.fillStyle=v;cx.fillRect(0,0,W_,H_)}
  requestAnimationFrame(frame)}
+
+/* ╔═══════════════ اللغات + ترجمة الشات ═══════════════╗
+   أضف لغة: ضعها في LANGS وأضف عمودها في TRD. أضف عبارة: سطر جديد [عربي, إنجليزي, تركي].
+   الترجمة تعمل على العبارات الثابتة (واجهة، أسماء، رسائل) — النصوص الديناميكية تُترجم بالأجزاء. */
+const LANGS={ar:'العربية',en:'English',tr:'Türkçe'};
+let LANG='ar';try{LANG=localStorage.getItem('kd_lang')||'ar'}catch(e){}if(!LANGS[LANG])LANG='ar';
+const TRD=[
+['القوة','Power','Güç'],['قوة','Power','Güç'],['هجوم','Attack','Saldırı'],['الباس الملكي','Royal Pass','Kraliyet Geçişi'],['الباس','Pass','Geçiş'],
+['الأبطال والجيش','Heroes & Army','Kahramanlar ve Ordu'],['الأبطال','Heroes','Kahramanlar'],['أبطال','Heroes','Kahramanlar'],['التحالفات','Alliances','İttifaklar'],['التحالف','Alliance','İttifak'],['تحالف','Alliance','İttifak'],
+['المهام','Quests','Görevler'],['مهام','Quests','Görevler'],['الأحداث الأسبوعية','Weekly Events','Haftalık Etkinlikler'],['أحداث','Events','Etkinlikler'],['متجر المملكة','Kingdom Shop','Krallık Mağazası'],['متجر','Shop','Mağaza'],['شات','Chat','Sohbet'],
+['المستوى','Level','Seviye'],['لفل','Lv','Sv'],['تحديث','Update','Güncelle'],['يتصل...','Connecting...','Bağlanıyor...'],['لاعب','players','oyuncu'],
+['ساحة الهجوم','Attack Arena','Saldırı Arenası'],['صيد الوحوش','Monster Hunt','Canavar Avı'],['الكهوف','Caves','Mağaralar'],['الأبراج','Towers','Kuleler'],['الإعدادات','Settings','Ayarlar'],['عرض البطل','Hero Showcase','Kahraman Gösterimi'],
+['موارد اللعبة','Game Resources','Oyun Kaynakları'],['نتيجة المعركة','Battle Result','Savaş Sonucu'],['خريطة العالم الكبرى','Grand World Map','Büyük Dünya Haritası'],['موارد الخريطة','Map Resources','Harita Kaynakları'],
+['سكانات القلعة','Castle Skins','Kale Görünümleri'],['غرفة البطل','Hero Room','Kahraman Odası'],['لوحة المطوّر','Developer Panel','Geliştirici Paneli'],['الدردشة','Chat','Sohbet'],['وحش بري','Wild Monster','Vahşi Canavar'],
+['الأسلحة','Weapons','Silahlar'],['التعاويذ','Spells','Büyüler'],['السكانات','Skins','Görünümler'],['الحزم','Bundles','Paketler'],['أكواد هدايا','Gift Codes','Hediye Kodları'],['🌍 عام','🌍 Global','🌍 Genel'],['🏯 التحالف','🏯 Alliance','🏯 İttifak'],['✉️ خاص','✉️ Private','✉️ Özel'],
+['رجوع','Back','Geri'],['إرسال','Send','Gönder'],['اكتب رسالتك...','Type your message...','Mesajınızı yazın...'],['استلام الكل','Claim all','Tümünü al'],['استلام','Claim','Al'],['استلم','Claim','Al'],['شراء','Buy','Satın al'],
+['تجهيز','Equip','Kuşan'],['نزع','Unequip','Çıkar'],['ترقية','Upgrade','Yükselt'],['تجنيد','Recruit','Devşir'],['تفعيل','Activate','Etkinleştir'],['إيقاف','Stop','Durdur'],['مغادرة','Leave','Ayrıl'],['إنشاء','Create','Oluştur'],['انضمام','Join','Katıl'],
+['ادخل','Enter','Gir'],['اصعد','Climb','Tırman'],['قاتل','Fight','Savaş'],['نصر أمام','Victory over','Zafer:'],['هزيمة أمام','Defeat by','Yenilgi:'],['متابعة','Continue','Devam'],['حفظ','Save','Kaydet'],['إغلاق','Close','Kapat'],['إلغاء','Cancel','İptal'],
+['سهل ✅','Easy ✅','Kolay ✅'],['متكافئ ⚖️','Even ⚖️','Dengeli ⚖️'],['صعب ⚠️','Hard ⚠️','Zor ⚠️'],['حليف','Ally','Müttefik'],['حشد','Rally','Toplanma'],['سور','Wall','Sur'],['قوتك','Your power','Gücün'],
+['اختر مملكة للهجوم عليها؛ سيخرج جيشك من قلعتك ويسير إليها','Pick a kingdom to attack; your army will march out from your castle','Saldırmak için bir krallık seç; ordun kaleden yola çıkacak'],['الممالك الحقيقية تظهر أونلاين.','Real kingdoms appear online.','Gerçek krallıklar çevrimiçi görünür.'],
+['ميزة عنصرية ✅','Elemental advantage ✅','Element avantajı ✅'],['ضعف عنصري ⚠️','Elemental weakness ⚠️','Element zayıflığı ⚠️'],['متعادل','Neutral','Dengeli'],['أُنجز','Cleared','Tamamlandı'],['يبعد','Distance','Uzaklık'],
+['كهف الخفافيش','Bat Cave','Yarasa Mağarası'],['كهف الجليد','Ice Cave','Buz Mağarası'],['كهف الحمم','Lava Cave','Lav Mağarası'],['كهف البلّور','Crystal Cave','Kristal Mağarası'],['كهف الظلال','Shadow Cave','Gölge Mağarası'],['عرين التنين','Dragon Lair','Ejderha İni'],
+['برج المبتدئين','Novice Tower','Çaylak Kulesi'],['برج المحاربين','Warrior Tower','Savaşçı Kulesi'],['برج الجحيم','Hell Tower','Cehennem Kulesi'],['طابق','Floor','Kat'],['✅ أُنجز كاملاً','✅ Fully completed','✅ Tamamen bitti'],['أنهيت هذا البرج!','You finished this tower!','Bu kuleyi bitirdin!'],
+['جرذ متوحش','Wild Rat','Vahşi Sıçan'],['ذئب الغابة','Forest Wolf','Orman Kurdu'],['عقرب الصحراء','Desert Scorpion','Çöl Akrebi'],['تمساح المستنقع','Swamp Crocodile','Bataklık Timsahı'],['زومبي الليل','Night Zombie','Gece Zombisi'],['غول الجبل','Mountain Ogre','Dağ Devi'],
+['سحلية عملاقة','Giant Lizard','Dev Kertenkele'],['تنين فتي','Young Dragon','Genç Ejderha'],['شيطان الجحيم','Hell Demon','Cehennem Şeytanı'],['كائن الفراغ','Void Being','Boşluk Varlığı'],['سيد الموت','Lord of Death','Ölüm Lordu'],
+['الوحوش تظهر عشوائياً في أنحاء الخريطة وتتجدد بعد قتلها — اضغط وحشاً على الخريطة أو اختر من هنا ليسير إليه جيشك','Monsters spawn randomly across the map and respawn after being killed — tap one on the map or pick here to send your army','Canavarlar haritada rastgele çıkar ve öldürülünce yenilenir — haritadan dokun veya buradan seç'],
+['لا توجد وحوش حالياً — ستظهر قريباً...','No monsters right now — they will appear soon...','Şu an canavar yok — yakında çıkacak...'],['الغنيمة','Loot','Ganimet'],
+['نار','Fire','Ateş'],['ماء','Water','Su'],['أرض','Earth','Toprak'],['رياح','Wind','Rüzgar'],['برق','Lightning','Yıldırım'],['ثلج','Ice','Buz'],['ظلام','Dark','Karanlık'],['نور','Light','Işık'],['زمن','Time','Zaman'],['فراغ','Void','Boşluk'],
+['عادي','Common','Sıradan'],['مميز','Uncommon','Seçkin'],['خارق','Rare','Nadir'],['أسطورة','Legendary','Efsanevi'],['لا يقهر','Invincible','Yenilmez'],
+['بيلا','Bella','Bella'],['كورين','Korin','Korin'],['سامي','Sami','Sami'],['رايكو','Raiko','Raiko'],['لونا','Luna','Luna'],['دراكو','Draco','Draco'],['تيتان','Titan','Titan'],['سليم الجني','Salim the Jinn','Salim Cin'],['مارينا','Marina','Marina'],['أوتا','Outa','Outa'],['مارو','Maro','Maro'],['أريج','Areej','Areej'],['غافار','Ghafar','Ghafar'],['زارا','Zara','Zara'],['نيفروز','Nivroz','Nivroz'],['بالين','Balin','Balin'],['أورين','Orin','Orin'],
+['🌾 جمع: +40% غنيمة من موارد الخريطة','🌾 Gather: +40% loot from map resources','🌾 Toplama: harita kaynaklarından +%40 ganimet'],['🎖️ تدريب: تكلفة تدريب الجنود -20%','🎖️ Training: troop training cost -20%','🎖️ Eğitim: asker eğitim maliyeti -%20'],['❄️ تجميد: خسائرك في المعارك -25%','❄️ Freeze: battle losses -25%','❄️ Dondurma: savaş kayıpları -%25'],['👷 بناء: سرعة بناء السور تتضاعف','👷 Build: wall build speed doubled','👷 İnşa: sur inşa hızı iki katı'],['🏹 صيد: +30% غنيمة من الوحوش والكهوف','🏹 Hunt: +30% loot from monsters and caves','🏹 Av: canavar ve mağara ganimeti +%30'],
+['قواميس الجيش','Army','Ordu'],['كل نوع له قوة مختلفة — الأنواع المتقدمة تفتح مع مستوى مملكتك','Each type has different power — advanced types unlock as your kingdom levels up','Her türün gücü farklı — gelişmiş türler krallık seviyenle açılır'],['تدريب قديم','Basic training','Temel eğitim'],
+['رامي سهام','Archer','Okçu'],['فارس','Knight','Şövalye'],['فيل حرب','War Elephant','Savaş Fili'],['منجنيق','Catapult','Mancınık'],['جنود','soldiers','asker'],['جندي عادي','Common Soldier','Sıradan Asker'],['جندي','soldier','asker'],
+['سعر الواحد','Price each','Tanesi'],['أغلى من الجندي','pricier than a soldier','askerden pahalı'],['يفتح بلفل المملكة','Unlocks at kingdom level','Krallık seviyesinde açılır'],['واصل التطوير','keep growing','gelişmeye devam et'],
+['السور لفل','Wall Lv','Sur Sv'],['قيد البناء — متبقي','Under construction — remaining','İnşaatta — kalan'],['بناء','Build','İnşa et'],['يرفع دفاعك','Boosts your defense','Savunmanı artırır'],['يستغرق','Takes','Süre:'],
+['أقسام الجيش:','Army divisions:','Ordu bölümleri:'],['القسم','Division','Bölüm'],['قائد قسم','Division leader','Bölüm lideri'],['سقف','cap','sınır'],['غير مجنّد','Not recruited','Devşirilmedi'],['انقل الأبطال بين الأقسام بأزرار ق1..ق4، وقائد كل قسم يقوده في القتال','Move heroes between divisions with the D1..D4 buttons; each division leader commands it in battle','Kahramanları bölümler arasında taşı; her bölüm lideri savaşta onu yönetir'],
+['أسعار الأسلحة ترتفع تدريجياً مع كثرة الشراء','Weapon prices rise as you buy more','Daha çok aldıkça silah fiyatları artar'],['عندك','You have','Sende'],['تملك','you own','sahipsin'],['تملكها','you own it','sende var'],
+['سيف عادي','Common Sword','Sıradan Kılıç'],['قوس مركب','Composite Bow','Kompozit Yay'],['قوس','Bow','Yay'],['سيف مزدوج','Double Sword','Çift Kılıç'],['سيف مسنن','Serrated Sword','Tırtıklı Kılıç'],['سيف','Sword','Kılıç'],['فأس كبير','Great Axe','Büyük Balta'],['فأس مزدوج','Double Axe','Çift Balta'],['فأس','Axe','Balta'],
+['رمح طويل','Long Spear','Uzun Mızrak'],['رمح قصير','Short Spear','Kısa Mızrak'],['رمح صاعقة','Lightning Spear','Yıldırım Mızrağı'],['رمح','Spear','Mızrak'],['خنجر مسموم','Poison Dagger','Zehirli Hançer'],['خنجر','Dagger','Hançer'],['مطرقة حديد','Iron Hammer','Demir Çekiç'],['مطرقة','Hammer','Çekiç'],['منجل','Sickle','Orak'],['فِرَس','Horse','At'],['كاتيانا','Katana','Katana'],['نصل الملك','King Blade','Kral Bıçağı'],
+['درع الحماية','Protection Shield','Koruma Kalkanı'],['صاعقة النيزك','Meteor Bolt','Meteor Yıldırımı'],['درع','Shield','Kalkan'],['لهب','Flame','Alev'],['عاصفة','Storm','Fırtına'],['زلزال','Earthquake','Deprem'],['موجة','Wave','Dalga'],['نيزك','Meteor','Meteor'],['جليد','Frost','Buz'],['رعد','Thunder','Gök Gürültüsü'],['شبح','Ghost','Hayalet'],['وحش','Beast','Canavar'],['قوى الظل','Shadow Powers','Gölge Güçleri'],
+['التعاويذ والدروع السحرية لتعزيز قوة القلعة','Spells and magic shields to boost your castle','Kaleni güçlendiren büyüler ve sihirli kalkanlar'],['يرفع دفاعك 15% أمام اللاعبين (حتى 5)','Raises defense 15% against players (up to 5)','Oyunculara karşı savunmayı %15 artırır (en fazla 5)'],
+['حزمة الموارد','Resource Pack','Kaynak Paketi'],['مقابل','for','karşılığında'],['تسريع الإنتاج','Production Boost','Üretim Hızlandırma'],['يجهّز كل المباني المتاحة','Readies all available buildings','Tüm binaları hazırlar'],['صندوق الذهب السريع','Quick Gold Chest','Hızlı Altın Sandığı'],['الحصول على 15,000 ذهبة فوراً','Get 15,000 gold instantly','Anında 15.000 altın al'],['مقايضة','Trade','Takas'],['مفعّل','Active','Aktif'],['جوائز ضخمة وسكانات حصرية','Huge rewards and exclusive skins','Dev ödüller ve özel görünümler'],['فتح','Open','Aç'],
+['أدخل كود الشحن أو الهدية','Enter a top-up or gift code','Yükleme veya hediye kodunu gir'],['احصل على مكافآت وموارد مجانية من المطور','Get free rewards and resources from the developer','Geliştiriciden ücretsiz ödül ve kaynak kazan'],['الأكواد المفعلة سابقاً:','Previously redeemed codes:','Daha önce kullanılan kodlar:'],
+['اجمع الموارد 5 مرات','Collect resources 5 times','Kaynakları 5 kez topla'],['درّب 30 جندي','Train 30 soldiers','30 asker eğit'],['اقتل 3 وحوش','Kill 3 monsters','3 canavar öldür'],['أكمل كهفاً','Complete a cave','Bir mağarayı bitir'],['اصعد 3 طوابق','Climb 3 floors','3 kat çık'],['اربح هجوماً على لاعب','Win an attack on a player','Bir oyuncuya saldırıyı kazan'],['انضم لتحالف','Join an alliance','Bir ittifaka katıl'],['الجائزة','Reward','Ödül'],
+['المسار الملكي مفعّل','Royal track active','Kraliyet yolu aktif'],['المسار الملكي مقفل — المسار المجاني مفتوح للجميع','Royal track locked — free track open to everyone','Kraliyet yolu kilitli — ücretsiz yol herkese açık'],['التقدم من الصيد والكهوف والمهام والهجوم','Progress comes from hunting, caves, quests and attacks','İlerleme av, mağara, görev ve saldırıdan gelir'],['افتح المسار الملكي','Unlock the Royal Track','Kraliyet yolunu aç'],['جوائز أكبر بـ3 أضعاف + سكانات قلعة حصرية','3x bigger rewards + exclusive castle skins','3 kat büyük ödüller + özel kale görünümleri'],['كود التفعيل بعد الدفع','Activation code after payment','Ödemeden sonra aktivasyon kodu'],['مجاني','Free','Ücretsiz'],['ملكي','Royal','Kraliyet'],
+['القلعة الأصلية','Original Castle','Orijinal Kale'],['قلعة اليشم','Jade Castle','Yeşim Kale'],['القلعة الذهبية','Golden Castle','Altın Kale'],['قلعة اللهب','Flame Castle','Alev Kalesi'],['قلعة الظلال','Shadow Castle','Gölge Kalesi'],['قلعة الجليد','Ice Castle','Buz Kalesi'],['قلعة الجحيم','Inferno Castle','Cehennem Kalesi'],['القلعة الملكية','Royal Castle','Kraliyet Kalesi'],
+['الشكل الكلاسيكي','Classic look','Klasik görünüm'],['حجر أخضر هادئ','Calm green stone','Sakin yeşil taş'],['فخامة الملوك','Royal luxury','Kral lüksü'],['سقف متوهج','Glowing roof','Parlayan çatı'],['غموض الظلام','Dark mystery','Karanlık gizem'],['حصرية الباس','Pass exclusive','Geçişe özel'],['قمة الباس الملكي','Royal Pass pinnacle','Kraliyet Geçişi zirvesi'],
+['مُجهّزة ✓','Equipped ✓','Kuşanıldı ✓'],['غيّر شكل قلعتك — السكان يظهر فوراً على الخريطة','Change your castle look — the skin shows on the map instantly','Kale görünümünü değiştir — haritada anında görünür'],
+['قوة البطل','Hero power','Kahraman gücü'],['قوة العتاد','Gear power','Ekipman gücü'],['المجموع','Total','Toplam'],['الهجوم','Attack','Saldırı'],['الدفاع','Defense','Savunma'],['الصحة','Health','Sağlık'],['قوي ضد','Strong against','Güçlü'],['ضعيف أمام','Weak against','Zayıf'],['الخاصية','Ability','Yetenek'],['الدروع','Armor','Zırhlar'],['السلاح','Weapon','Silah'],
+['الغرفة مقفلة — جنّد البطل أولاً لتجهيز السلاح والدرع','Room locked — recruit the hero first to equip weapon and armor','Oda kilitli — silah ve zırh için önce kahramanı devşir'],['سيف حديدي','Iron Sword','Demir Kılıç'],['سيف اللهب','Flame Sword','Alev Kılıcı'],['سيف الصقيع','Frost Sword','Don Kılıcı'],['رمح الصاعقة','Thunder Spear','Yıldırım Mızrağı'],['خنجر الظلال','Shadow Dagger','Gölge Hançeri'],['نصل الملوك','Kings Blade','Kralların Bıçağı'],['درع جلدي','Leather Armor','Deri Zırh'],['درع حديدي','Iron Armor','Demir Zırh'],['درع الفارس','Knight Armor','Şövalye Zırhı'],['درع التنين','Dragon Armor','Ejderha Zırhı'],['الدرع الملكي','Royal Armor','Kraliyet Zırhı'],
+['لا توجد رسائل بعد — ابدأ المحادثة 👋','No messages yet — start the conversation 👋','Henüz mesaj yok — sohbeti başlat 👋'],['لا محادثات خاصة بعد.','No private chats yet.','Henüz özel sohbet yok.'],['ابدأ محادثة مع لاعب:','Start a chat with a player:','Bir oyuncuyla sohbet başlat:'],['راسله','Message','Mesaj at'],['فتح','Open','Aç'],['انضم إلى تحالف من زر 🏯 لتستخدم شات التحالف.','Join an alliance with the 🏯 button to use alliance chat.','İttifak sohbeti için 🏯 düğmesinden bir ittifaka katıl.'],['أنت غير متصل بالخادم — الرسائل تُحفظ محلياً فقط.','You are offline — messages are saved locally only.','Sunucuya bağlı değilsin — mesajlar yalnızca yerelde saklanır.'],['لا يوجد لاعبون متصلون الآن.','No players online right now.','Şu an çevrimiçi oyuncu yok.'],
+['جارٍ تحميل التحالفات...','Loading alliances...','İttifaklar yükleniyor...'],['انتظر ثوانٍ، الاتصال بالخادم أبطأ من المعتاد','Wait a few seconds, the server is slower than usual','Birkaç saniye bekle, sunucu normalden yavaş'],['اسم تحالفك الجديد','Your new alliance name','Yeni ittifak adın'],['التحالفات المتاحة:','Available alliances:','Mevcut ittifaklar:'],['لا توجد تحالفات بعد — كن أول من ينشئ واحداً.','No alliances yet — be the first to create one.','Henüz ittifak yok — ilkini sen kur.'],['عضو','members','üye'],['قوة التحالف','Alliance power','İttifak gücü'],['مكافأة قوة','power bonus','güç bonusu'],['(أنت)','(you)','(sen)'],['حشود التحالف الجارية:','Ongoing alliance rallies:','Devam eden ittifak toplanmaları:'],['بقيادة','led by','lider:'],['يهاجم خلال','attacks in','saldırı:'],['انضم بالجيش','Join with army','Orduyla katıl'],['قائد أنت','you lead','lider sensin'],
+['أحداث تتجدد أسبوعياً — أكمل الهدف واستلم الجائزة قبل نهاية العدّاد','Weekly events — complete the goal and claim the reward before the timer ends','Haftalık etkinlikler — hedefi tamamla ve süre bitmeden ödülü al'],['لا توجد أحداث نشطة حالياً — تعال لاحقاً.','No active events right now — come back later.','Şu an aktif etkinlik yok — sonra gel.'],['التقدم','Progress','İlerleme'],['ينتهي خلال','ends in','bitiş:'],['استلمتها','Claimed','Alındı'],
+['اقتل وحوشاً','Kill monsters','Canavar öldür'],['أكمل كهوفاً','Complete caves','Mağara bitir'],['اربح هجمات على لاعبين','Win attacks on players','Oyunculara saldırıları kazan'],['درّب جنوداً','Train soldiers','Asker eğit'],['اجمع موارد من الخريطة','Gather map resources','Harita kaynaklarını topla'],['اصعد طوابق الأبراج','Climb tower floors','Kule katlarına çık'],['سجّل حضورك يومياً','Check in daily','Her gün giriş yap'],
+['معرّفك:','Your ID:','Kimliğin:'],['موارد اللعبة — محمّل','Game resources — loaded','Oyun kaynakları — yüklü'],['الكل','All','Tümü'],['المجسمات','Models','Modeller'],['الأصوات','Sounds','Sesler'],['ملء الشاشة','Fullscreen','Tam ekran'],['محمّل على الجهاز','Loaded on device','Cihazda yüklü'],['جارٍ التحميل...','Loading...','Yükleniyor...'],['غير موجود على الخادم','Not found on server','Sunucuda bulunamadı'],['غير محمّل','Not loaded','Yüklenmedi'],['مجسم 3D','3D model','3D model'],['صوت:','Sound:','Ses:'],
+['المزارع والمخيمات والمناجم موزعة في أنحاء الخريطة — أرسل جيشك ليجمع منها. المواقع الجديدة تتجدد كل فترة.','Farms, camps and mines are scattered across the map — send your army to gather. Spots respawn over time.','Çiftlikler, kamplar ve madenler haritaya dağılmış — ordunu gönder. Noktalar zamanla yenilenir.'],['أرسل الجيش','Send army','Ordu gönder'],['مزرعة','Farm','Çiftlik'],['مخيّم حطّاب','Lumber Camp','Oduncu Kampı'],['منجم','Mine','Maden'],['سيصل الجيش خلال 5 دقائق ثم يعود بالغنيمة','Army arrives in 5 minutes then returns with loot','Ordu 5 dakikada varır ve ganimetle döner'],
+['يهاجمك — يصل بعد','is attacking you — arrives in','sana saldırıyor — varış:'],
+['ترقيت إلى المستوى','You reached level','Seviye atladın:'],['لسه ما جهز — انتظر قليلاً','Not ready yet — wait a bit','Henüz hazır değil — biraz bekle'],['جيشك في مهمة حالياً','Your army is on a mission','Ordun şu an görevde'],['جيشك في مهمة','Your army is on a mission','Ordun görevde'],['لا يمكنك مهاجمة عضو في تحالفك','You cannot attack a member of your alliance','İttifak üyene saldıramazsın'],['درّب جنوداً أو جنّد بطلاً','Train soldiers or recruit a hero','Asker eğit veya kahraman devşir'],['انطلق جيشك إلى','Your army set out to','Ordun yola çıktı:'],['يصل بعد 5 دقائق','arrives in 5 minutes','5 dakikada varır'],
+['اكتمل بناء السور','Wall construction complete','Sur inşaatı tamamlandı'],['غنمت','You looted','Ganimet aldın:'],['خسرت','You lost','Kaybın:'],['قوّ جيشك وحاول مجدداً','Strengthen your army and try again','Ordunu güçlendir ve tekrar dene'],['خبرة','XP','XP'],['موارد غير كافية','Not enough resources','Yetersiz kaynak'],['تم كتم الصوت','Sound muted','Ses kapatıldı'],['تم تشغيل الصوت','Sound on','Ses açık'],['اشتريت','You bought','Satın aldın:'],
+['تعذّرت الترجمة','Translation failed','Çeviri başarısız']
+];
+let TRM={},TRK=[];
+function buildTR(){TRM={};TRK=[];if(LANG==='ar')return;const ix=LANG==='en'?1:2;TRD.forEach(r=>{if(r[ix])TRM[r[0]]=r[ix]});TRK=Object.keys(TRM).sort((a,b)=>b.length-a.length)}
+function trans(s){if(LANG==='ar'||!s)return s;s=String(s);if(!/[؀-ۿ]/.test(s))return s;for(const k of TRK){if(s.indexOf(k)>=0)s=s.split(k).join(TRM[k])}return s}
+const TRN=new WeakMap();
+function trNode(n){const v=n.nodeValue;if(!v)return;const pe=n.parentElement;if(pe&&pe.closest&&pe.closest('.cm,.trt,input,textarea,script,style'))return;const r=TRN.get(n);const o=(r&&r.t===v)?r.o:v;const t=trans(o);if(t!==v)n.nodeValue=t;TRN.set(n,{o,t})}
+function trTree(root){const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);const L=[];let n;while(n=w.nextNode())L.push(n);L.forEach(trNode);
+ if(root.querySelectorAll)root.querySelectorAll('[placeholder]').forEach(e=>{if(e.dataset.ph===undefined)e.dataset.ph=e.getAttribute('placeholder');e.setAttribute('placeholder',trans(e.dataset.ph))})}
+const trObs=new MutationObserver(ms=>{for(const m of ms){if(m.type==='characterData')trNode(m.target);else m.addedNodes.forEach(a=>{if(a.nodeType===3)trNode(a);else if(a.nodeType===1)trTree(a)})}});
+trObs.observe(document.body,{childList:true,subtree:true,characterData:true});
+function applyLang(){buildTR();const r=document.documentElement;r.lang=LANG;r.dir=LANG==='ar'?'rtl':'ltr';trTree(document.body)}
+function setLang(l){if(!LANGS[l])return;LANG=l;try{localStorage.setItem('kd_lang',l)}catch(e){}applyLang();if(cur)render();toast('🌐 '+LANGS[l],'good')}
+function evProg(e){return Math.max(0,(S.ev[e.type]||0)-((S.evBase&&S.evBase[e.id])||0))}
+/* ترجمة رسائل الشات: تُترجم إلى لغة اللعبة الحالية (Google ثم MyMemory كاحتياطي) */
+const TRC={};
+async function chatTranslate(id){const m=CH.concat(DMi,DMo).find(x=>x.id===id);if(!m)return;
+ if(TRC[id]&&TRC[id]!=='...'){delete TRC[id];chatRefresh();return}
+ TRC[id]='...';chatRefresh();const tl=LANG;
+ try{const r=await fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl='+tl+'&dt=t&q='+encodeURIComponent(m.text));const j=await r.json();TRC[id]=j[0].map(x=>x[0]).join('')}
+ catch(e){try{const r=await fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(String(m.text).slice(0,450))+'&langpair=autodetect|'+tl);const j=await r.json();TRC[id]=j.responseData.translatedText}catch(e2){TRC[id]='⚠️ '+trans('تعذّرت الترجمة')}}
+ chatRefresh()}
+applyLang();
+
 init3D();loadArt();buildWorld();requestAnimationFrame(frame);setInterval(hud,4000);setInterval(uiTick,1000);setInterval(buildWorld,3000);hud();applyMute();net();restore();
 </script>
 </body>
