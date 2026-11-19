@@ -359,14 +359,72 @@ const SKINS=[
  {id:'inferno',n:'قلعة الجحيم',e:'🌋',p:-1,note:'الباس الملكي — مستوى 20',c:[0x3a1a18,0x4a2420,0x44201c,0xff3a10,0x2a100e,0x200a08],fl:0xff7a2a,glow:0x7a2000,d:'حصرية الباس'},
  {id:'royal',n:'القلعة الملكية',e:'👑',p:-1,note:'الباس الملكي — مستوى 30',c:[0xe9dcff,0xf6efff,0xefe4ff,0xf2bd52,0xd8c8f0,0xc2aee6],fl:0xf2bd52,glow:0x4a3600,d:'قمة الباس الملكي'}
 ];
+/* ===== سكنات مخفية + إعدادات منشورة من لوحة المطوّر ===== */
+const SKIN_HID=[];
+(function(){
+ const cl=v=>Math.min(255,v|0);
+ const sh=(c,k)=>(cl(((c>>16)&255)*k)<<16)|(cl(((c>>8)&255)*k)<<8)|cl((c&255)*k);
+ const nm=['ذهب الصحراء','سماء الليل','غابة الأسرار','بحر الأعماق','نجوم الشتاء','ربيع الزهور','رمال الذهب','صقيع القطب','بركان الغضب','ظلال الملوك'];
+ const pal=[
+  [0xc9a06a,0xe0bd80,0xd4b070,0xa5452a,0xb08a55,0x8a6a40,0xffb040],
+  [0x2a3a6a,0x3a4f8a,0x33487a,0x5a7ad0,0x253060,0x1c2650,0x9fc0ff],
+  [0x2f5a3a,0x3f7a4a,0x3a6a44,0x9a5a2a,0x2a4a30,0x203a24,0xb6ff8a],
+  [0x2a6a8a,0x3a8ab0,0x33779a,0x2fbfa0,0x23587a,0x1a4460,0x8ae8ff],
+  [0x5a6a8a,0x7a8aaa,0x6a7a9a,0xd0e0ff,0x4a5a7a,0x3a4a6a,0xffffff],
+  [0x9ad08a,0xb8e8a0,0xa8dc96,0xf080b0,0x7ab870,0x5a9858,0xffd0e8],
+  [0xd4a84a,0xf0c870,0xe0b860,0x7a3a1a,0xb08a40,0x8a6a30,0xffe08a],
+  [0x9ac8e8,0xe0f4ff,0xcfeaff,0x3a6ab0,0x8ab0d8,0x6a90c0,0xbfe8ff],
+  [0x3a1a1a,0x5a2a20,0x4a2220,0xff4a10,0x2a1212,0x200c0c,0xffa040],
+  [0x1a1030,0x2a1a48,0x241a40,0x9a40ff,0x140c24,0x0e0818,0xd0a0ff]];
+ pal.forEach((p,i)=>[.8,1,1.2].forEach((k,j)=>SKIN_HID.push({id:'cs'+i+'_'+j,n:nm[i]+(j?' '+['','II','III'][j]:''),e:'✨',p:100000,hidden:1,c:p.slice(0,6).map(x=>sh(x,k)),fl:p[6],glow:j===2?0x2a1600:0,d:'سكن مخفي'})));
+})();
+SKINS.push(...SKIN_HID);
+let LIVE={},SKIN_PUB=[],HS_PUB=[],PRW={fg:800,fw:120,fs:90,ft:20,pg:2500,pw:300,ps:220,pt:60};
+/* سكنات الشخصيات: تغيّر ألوان الدرع والمميز والعباءة فقط */
+const HSKN=[
+ {id:'h1',n:'الذهبي الملكي',ar:0xd9b25a,ac:0xffe9a0,cp:0x6a5010},
+ {id:'h2',n:'ظلال الليل',ar:0x2a1a40,ac:0xa060ff,cp:0x140c24},
+ {id:'h3',n:'جليد القطب',ar:0x9cc8e8,ac:0xeaf7ff,cp:0x3a6ab0},
+ {id:'h4',n:'لهب الجحيم',ar:0x5a1a10,ac:0xff6a20,cp:0x2a0c08},
+ {id:'h5',n:'غابة الزمرد',ar:0x2f5a3a,ac:0x7fffb0,cp:0x1a3a2a},
+ {id:'h6',n:'بحر الأعماق',ar:0x1f5f8a,ac:0x9fffe8,cp:0x0f3a5a},
+ {id:'h7',n:'الدم القديم',ar:0x6a1020,ac:0xff4060,cp:0x3a0a12},
+ {id:'h8',n:'فضة الملوك',ar:0xc0c8d8,ac:0xffffff,cp:0x7a8090},
+ {id:'h9',n:'رمال الصحراء',ar:0xc9a060,ac:0xffd070,cp:0x6a4a20},
+ {id:'h10',n:'نور السماء',ar:0xf0f0ff,ac:0xfff4a0,cp:0xe8e0ff}];
+function applyLive(c){LIVE=c||{};
+ PASS_SEASON=LIVE.passSeason||1;PASS_MAX=LIVE.passMax||30;PASS_STEP=LIVE.passStep||80;PASS_GEMS=LIVE.passGems||700;
+ PASS_SKIN=Object.assign({10:'ice',20:'inferno',30:'royal'},LIVE.passSkin||{});
+ PRW=Object.assign({fg:800,fw:120,fs:90,ft:20,pg:2500,pw:300,ps:220,pt:60},LIVE.passRW||{});
+ SKIN_PUB=LIVE.pubSkins||[];HS_PUB=LIVE.pubHS||[];
+ try{gmEnsure()}catch(e){}
+ try{hud();if(cur)render()}catch(e){}}
+function publishLive(obj){if(!db){toast('يحتاج اتصال بالخادم','bad');return}
+ db.collection('config').doc('live').set(Object.assign({},LIVE,obj)).then(()=>toast('✅ تم النشر','good')).catch(e=>toast('تعذّر النشر: '+(e.code||'خطأ'),'bad'))}
+function heroSkinFor(id){const sid=(S.hsk||{})[id];const h=sid&&HSKN.find(k=>k.id===sid);return h&&(devOK||HS_PUB.includes(sid))?{ar:h.ar,ac:h.ac,cp:h.cp}:{}}
+function hskHTML(hid){const vis=HSKN.filter(h=>devOK||HS_PUB.includes(h.id));if(!vis.length)return'';const cur=(S.hsk||{})[hid];
+ return `<div class="card" style="gap:6px;flex-wrap:wrap"><div class="g"><b>🎭 سكن الشخصية</b></div><div class="rbar">`+
+  `<button class="bt s ${!cur?'j':'g'}" data-hsk="${hid}|">الأصلي</button>`+
+  vis.map(h=>`<button class="bt s ${cur===h.id?'j':'g'}" data-hsk="${hid}|${h.id}">${esc(h.n)}</button>`).join('')+`</div></div>`}
+function skinDevHTML(){return card('🎨','السكنات المخفية','المخفي يظهر لك فقط. اضغط نشر ليظهر للجميع (يُشترى بـ 100,000 🪙).','','--rc:#a672e8')+
+ SKINS.filter(s=>s.hidden).map(s=>card(s.e,esc(s.n),(SKIN_PUB.includes(s.id)?'🟢 منشور':'🔒 مخفي')+' · '+esc(s.id),
+   `<button class="bt ${SKIN_PUB.includes(s.id)?'r':'j'} s" data-dev="spub:${s.id}">${SKIN_PUB.includes(s.id)?'إخفاء':'نشر'}</button>`)).join('')+
+ card('⭐','سكنات الشخصيات','تُنشر للجميع من هنا. تظهر في غرفة البطل.','','--rc:#a672e8')+
+ HSKN.map(h=>card('🎭',esc(h.n),(HS_PUB.includes(h.id)?'🟢 منشور':'🔒 مخفي')+' · '+esc(h.id),
+   `<button class="bt ${HS_PUB.includes(h.id)?'r':'j'} s" data-dev="hpub:${h.id}">${HS_PUB.includes(h.id)?'إخفاء':'نشر'}</button>`)).join('')}
+function passDevHTML(){const f=(id,l,val)=>`<label style="font-size:12px;color:var(--dim)">${l}<input type="number" id="${id}" value="${val}" style="width:100%;padding:8px;border-radius:9px;background:#0a1626;color:var(--ink);border:1px solid var(--line);direction:ltr"></label>`;
+ const R=PRW;
+ return card('👑','إعداد الباس','غيّر القيم ثم اضغط نشر. تغيير رقم الموسم يصفّر تقدم الباس للجميع ويقفل المسار الملكي.','','--rc:#f2bd52')+
+ `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">${f('pSeason','رقم الموسم',PASS_SEASON)}${f('pMax','أعلى مستوى',PASS_MAX)}${f('pStep','نقاط لكل مستوى',PASS_STEP)}${f('pGems','سعر الباس الملكي 💎',PASS_GEMS)}${f('pFg','مجاني: ذهب/مستوى',R.fg)}${f('pFw','مجاني: خشب (زوجي)',R.fw)}${f('pFs','مجاني: حجر (فردي)',R.fs)}${f('pFt','مجاني: جنود كل 5',R.ft)}${f('pPg','ملكي: ذهب/مستوى',R.pg)}${f('pPw','ملكي: خشب/مستوى',R.pw)}${f('pPs','ملكي: حجر/مستوى',R.ps)}${f('pPt','ملكي: جنود كل 5',R.pt)}${f('pSkLvl','سكن عند مستوى',0)}<label style="font-size:12px;color:var(--dim)">معرّف السكن<input type="text" id="pSkId" placeholder="مثال: cs0_1" style="width:100%;padding:8px;border-radius:9px;background:#0a1626;color:var(--ink);border:1px solid var(--line);direction:ltr"></label></div>`+
+ `<div class="rbar"><button class="bt j" data-dev="ppub">🚀 نشر الباس</button></div>`}
 const hex6=n=>'#'+n.toString(16).padStart(6,'0');
 
 /* ===== الباس الملكي ===== */
-const PASS_MAX=30,PASS_STEP=80,PASS_SKIN={10:'ice',20:'inferno',30:'royal'};
-const PASS_GEMS=700; /* سعر الباس الملكي بالجواهر */
-const PASS_SEASON=1; /* رقم موسم الباس: ارفعه (2، 3، ...) عند نزول باس جديد فيُصفَّر تقدم الجميع ويُقفل المسار الملكي */
-function passRew(l,p){const r={};if(!p){r.g=800*l;if(l%2===0)r.w=120*l;else r.s=90*l;if(l%5===0)r.t=20*(l/5)}
- else{r.g=2500*l;r.w=300*l;r.s=220*l;if(l%5===0)r.t=60*(l/5);if(PASS_SKIN[l])r.skin=PASS_SKIN[l]}return r}
+let PASS_MAX=30,PASS_STEP=80,PASS_SKIN={10:'ice',20:'inferno',30:'royal'};
+let PASS_GEMS=700; /* سعر الباس الملكي بالجواهر */
+let PASS_SEASON=1; /* رقم موسم الباس: ارفعه (2، 3، ...) عند نزول باس جديد فيُصفَّر تقدم الجميع ويُقفل المسار الملكي */
+function passRew(l,p){const r={};if(!p){r.g=PRW.fg*l;if(l%2===0)r.w=PRW.fw*l;else r.s=PRW.fs*l;if(l%5===0)r.t=PRW.ft*(l/5)}
+ else{r.g=PRW.pg*l;r.w=PRW.pw*l;r.s=PRW.ps*l;if(l%5===0)r.t=PRW.pt*(l/5);if(PASS_SKIN[l])r.skin=PASS_SKIN[l]}return r}
 const rewTxt=r=>[r.g&&fmt(r.g)+'🪙',r.w&&fmt(r.w)+'🪵',r.s&&fmt(r.s)+'🪨',r.t&&r.t+'⚔️',r.skin&&'🏰 '+(SKINS.find(s=>s.id===r.skin)||{n:''}).n].filter(Boolean).join(' · ');
 
 const TP=4,tcost=n=>Math.floor(100+n*.8);
@@ -466,6 +524,7 @@ async function net(){try{
  db.collection('rallyjoins').where('t','>',Date.now()-3600e3).limit(200).onSnapshot(s=>{RJS=s.docs.map(x=>({id:x.id,...x.data()}));if(cur==='ally')render()},()=>{});
  db.collection('events').where('end','>',Date.now()-6048e5).limit(30).onSnapshot(s=>{EVL=s.docs.map(x=>({id:x.id,...x.data()}));S.evBase=S.evBase||{};EVL.forEach(e=>{if(S.evBase[e.id]===undefined)S.evBase[e.id]=S.ev[e.type]||0});save();if(cur==='events')render()},()=>{});
  db.collection('config').doc('update').onSnapshot(d=>{if(d.exists())showUpd(d.data())},()=>{});
+ db.collection('config').doc('live').onSnapshot(d=>applyLive(d.exists()?d.data():{}),()=>{});
  sync(true);hud()}catch(e){netErr=e.code||String(e.message||e).slice(0,40);online=false;hud()}}
 function sync(f){if(!db||(!dirty&&!f)||Date.now()-lastSync<4000)return;lastSync=Date.now();dirty=false;db.collection('players').doc(uid).set({name:S.name,power:Math.floor(power()*(1+.15*Math.min(5,shieldN(S)))),gold:Math.floor(S.gold),lvl:S.lvl,wall:S.wall,ally:S.ally,at:Date.now()}).then(()=>{if(online)netErr=''}).catch(e=>{netErr='write:'+(e.code||'error');hud()})}
 setInterval(()=>sync(),5000);
@@ -599,7 +658,7 @@ function skinSVG(s){const c=s.c.map(hex6),bg=SKBG[s.id]||SKBG.default,id=s.id,fl
  <rect x="32" y="52" width="56" height="30" fill="url(#sb${id})"/>${[0,1,2,3,4,5,6].map(i=>`<rect x="${32+i*9}" y="47" width="5" height="6" fill="${c[1]}"/>`).join('')}
  <rect x="48" y="28" width="24" height="42" fill="${c[2]}"/><polygon points="43,28 60,6 77,28" fill="${c[3]}"/><rect x="59.2" y="-4" width="1.4" height="12" fill="#ddd"/><polygon points="60.6,-3 72,0 60.6,3" fill="${fl}"/>${crown}
  <path d="M53 82V70Q60 62 67 70V82Z" fill="#3b2412"/><rect x="39" y="60" width="5" height="8" fill="#ffd27a"/><rect x="76" y="60" width="5" height="8" fill="#ffd27a"/><rect x="57" y="38" width="6" height="9" fill="#ffd27a"/><rect x="26" y="56" width="4" height="7" fill="#ffd27a"/><rect x="90" y="56" width="4" height="7" fill="#ffd27a"/></g>${front}</svg>`}
-function skinCards(){return SKINS.map(s=>{const own=S.skins.includes(s.id),on=S.skin===s.id;
+function skinCards(){return SKINS.filter(s=>!s.hidden||devOK||SKIN_PUB.includes(s.id)).map(s=>{const own=S.skins.includes(s.id),on=S.skin===s.id;
  const btn=on?'<button class="bt g" disabled>مُجهّزة ✓</button>':own?`<button class="bt j" data-seq="${s.id}">تجهيز</button>`:s.p<0?`<button class="bt g" disabled>🔒 ${esc(s.note)}</button>`:`<button class="bt" data-sbuy="${s.id}" ${S.gold<s.p?'disabled':''}>${fmt(s.p)}🪙 شراء</button>`;
  const tag=s.p<0?'<span class="tag" style="color:#a672e8">👑 باس</span>':s.p>0?'<span class="tag" style="color:#f2bd52">متجر</span>':'';
  return `<div class="card skc ${on?'rar':''}" style="${on?'--rc:#f2bd52':s.p<0?'--rc:#a672e8aa':''}"><div class="skv">${skinSVG(s)}</div><div class="g"><b>${esc(s.n)}${tag}</b><small>${esc(s.d||'')}${own?' · ✅ تملكها':''}</small><small class="fx">✨ ${SKX[s.id]||'الشكل الكلاسيكي الأصلي'}</small>${btn}</div></div>`}).join('')}
@@ -628,7 +687,7 @@ function roomHTML(){const x=HER.find(v=>v[0]===arg.id),lv=S.hs[x[0]],r=RK[x[2]],
  const stats=`<div class="stbox">${bar('⚔️ الهجوم',tot*.55+gp*.2,'#ee5b45')}${bar('🛡️ الدفاع',tot*.3+gp*.15,'#5db4f0')}${bar('❤️ الصحة',tot*1.4,'#46c792')}
   <div class="elnote">${EL[x[5]]} <b>${x[5]}</b> — قوي ضد: <b>${beats.map(e=>EL[e]+' '+e).join('، ')||'—'}</b> · ضعيف أمام: <b>${weak.map(e=>EL[e]+' '+e).join('، ')||'—'}</b></div></div>`;
  const acts=`<div class="rbar">${lv?`<button class="bt ${on?'g':'j'} s" data-act="${x[0]}">${on?'⏸ إيقاف':'▶ تفعيل'}</button><button class="bt s" data-up="${x[0]}" ${S.gold<x[4]*lv*6?'disabled':''}>⬆ ترقية ${fmt(x[4]*lv*6)}🪙</button>`:`<button class="bt j s" data-rec="${x[0]}" ${S.gold<r[2]?'disabled':''}>🎖️ تجنيد ${fmt(r[2])}🪙</button>`}${dl('glb_'+x[0],'مجسم GLB')}<button class="bt g s" data-w="heroes">↩ رجوع</button></div>`;
- const tabs=`<div class="tabs2"><button class="${rTab==='weapon'?'on':''}" data-rtab="weapon">⚔️ الأسلحة (${GEAR.weapon.length})</button><button class="${rTab==='armor'?'on':''}" data-rtab="armor">🛡️ الدروع (${GEAR.armor.length})</button></div>`;
+ const tabs=hskHTML(x[0])+`<div class="tabs2"><button class="${rTab==='weapon'?'on':''}" data-rtab="weapon">⚔️ الأسلحة (${GEAR.weapon.length})</button><button class="${rTab==='armor'?'on':''}" data-rtab="armor">🛡️ الدروع (${GEAR.armor.length})</button></div>`;
  const cat=GEAR[rTab],curIt=gearFind(rTab,eq[rTab]);let list;
  if(!lv)list=`<div class="lockbox"><span>🔒</span>الغرفة مقفلة — جنّد البطل أولاً لتجهيز السلاح والدرع</div>`;
  else if(!cat.length)list=`<div class="lockbox"><span>${GSLOT[rTab][0]}</span>${GSLOT[rTab][2]}</div>`;
@@ -755,6 +814,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('button,#lvlBox')
 
  if(t.id==='mute'){S.mute=!S.mute;save();applyMute();toast(S.mute?'🔇 تم كتم الصوت':'🔊 تم تشغيل الصوت');return}
  if(t.id==='updB'){if(UPD&&UPD.url){const w=window.open(UPD.url,'_blank');if(!w)location.href=UPD.url}return}if(t.id==='updX'){$('upd').hidden=true;return}
+ if(d.hsk!==undefined){const [hid,sid]=d.hsk.split('|');S.hsk=S.hsk||{};if(sid)S.hsk[hid]=sid;else delete S.hsk[hid];if(HV3)HV3.id='';save();render();return}
  if(d.wchg){switchWorld();return}if(d.vid){vsrc(d.vid).then(src=>openWin('video',{id:d.vid,src}));return}
  if(d.fs){try{document.documentElement.requestFullscreen()}catch(e){toast('اضبط ملء الشاشة من إعدادات Median','bad')}return}if(t.id==='wx'||d.close){closeWin();return}if(t.id==='lvlBox'){openWin('name');return}if(t.id==='bAtk'){openWin('attack');return}if(d.w){if(d.w==='chat'&&cur==='chat'){closeWin();return}openWin(d.w);return}
  if(d.plv){const lv=passLv();if(lv<PASS_MAX&&S.gold>=8000){S.gold-=8000;S.pxp=(lv+1)*PASS_STEP;toast('👑 مستوى الباس '+(lv+1),'good')}}
@@ -932,7 +992,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target&&e.target.i
 let devOK=false;
 const DEVH=1662313701;
 const devHash=s=>{let h=2166136261;s=String(s||'').trim().toLowerCase();for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0}return h>>>0};
-function devHTML(){return worldsHTML()+resetConfirmHTML()+devHTML0()+resetListHTML()}
+function devHTML(){return passDevHTML()+skinDevHTML()+worldsHTML()+resetConfirmHTML()+devHTML0()+resetListHTML()}
 function devHTML0(){const b=(a,t,c)=>`<button class="bt ${c||''}" data-dev="${a}">${t}</button>`;
  return card('🛠️','لوحة المطوّر','مخفية — فُتحت بالكود الخاص · كل شيء هنا مجاني',b('close','إغلاق','g'),'--rc:#a672e8')+
  card('🪙','الذهب','أضف ذهباً فوراً',b('g1','+1م')+b('g2','+100م','j')+b('g3','+1مليار','r'))+
@@ -971,6 +1031,11 @@ function devAct(a){if(!devOK)return;
  if(a==='rsyes'){const d=devPend;devPend=null;if(d)resetPlayers(d.t==='all'?resetTargets():[d.p]);render();return}
  if(a==='wadd'){const n=(($('wNm')||{}).value||'').trim();if(!n){toast('اكتب اسم العالم','bad');return}WORLDS.push({id:'w'+Date.now().toString(36),name:n,open:true});saveWorlds();render();toast('🌍 تمت إضافة '+n,'good');return}
  if(a.startsWith('wtog:')){const w=WORLDS.find(x=>x.id===a.slice(5));if(w){w.open=!w.open;saveWorlds();render()}return}
+ if(a.startsWith('spub:')||a.startsWith('hpub:')){const k=a.startsWith('spub:')?'pubSkins':'pubHS',id=a.slice(5),L=(LIVE[k]||[]).slice(),i=L.indexOf(id);if(i>=0)L.splice(i,1);else L.push(id);publishLive({[k]:L});return}
+ if(a==='ppub'){const v=(id,d)=>{const e=$(id);return e&&e.value!==''?+e.value:d};
+  const sk=Object.assign({},LIVE.passSkin||{}),lv=v('pSkLvl',0),sid=(($('pSkId')||{}).value||'').trim();if(lv&&sid)sk[lv]=sid;
+  publishLive({passSeason:v('pSeason',PASS_SEASON),passMax:v('pMax',PASS_MAX),passStep:v('pStep',PASS_STEP),passGems:v('pGems',PASS_GEMS),
+   passRW:{fg:v('pFg',PRW.fg),fw:v('pFw',PRW.fw),fs:v('pFs',PRW.fs),ft:v('pFt',PRW.ft),pg:v('pPg',PRW.pg),pw:v('pPw',PRW.pw),ps:v('pPs',PRW.ps),pt:v('pPt',PRW.pt)},passSkin:sk});return}
  if(a==='close'){closeWin();return}
  if(a==='g1')S.gold+=1e6;if(a==='g2')S.gold+=1e8;if(a==='g3')S.gold+=1e9;
  if(a==='w1')S.wood+=1e6;if(a==='s1')S.stone+=1e6;if(a==='t1')S.troops+=10000;if(a==='lvl')S.lvl+=10;
@@ -1021,7 +1086,7 @@ function mkWeapon(type,Lm,col){const w=new THREE.Group(),steel=Lm(0xd3dae6),dk=L
  return w}
 Object.assign(H3.bella,{hm:'wing',sh:1});Object.assign(H3.korin,{sh:1});Object.assign(H3.sami,{hm:'horn',sh:1});Object.assign(H3.titan,{hm:'full',sh:1});Object.assign(H3.dracu,{sh:1});
 /* بطل مجسّم بأسلوب ألعاب الاستراتيجية: دروع مصفّحة، كتفيات، خوذة، عباءة، درع وسلاح كبير */
-function buildHero(id){const s=H3[id]||H3.bella;if(HG[id])return HG[id].clone(true);
+function buildHero(id){const s=Object.assign({},H3[id]||H3.bella,heroSkinFor(id));if(HG[id])return HG[id].clone(true);
  const g=new THREE.Group(),U={k:1};g.userData=U;
  const Lm=(c,e)=>new THREE.MeshLambertMaterial({color:c,emissive:e||0}),has=k=>s.ex.indexOf(k)>=0;
  const arm=Lm(s.ar),armD=Lm(shade(s.ar,.62)),un=Lm(shade(s.ar,.45)),gold=Lm(s.ac,shade(s.ac,.16)),glow=Lm(s.ac,s.ac),skin=Lm(s.sk),hair=Lm(s.hr),dark=Lm(0x16161e),white=Lm(0xffffff);
