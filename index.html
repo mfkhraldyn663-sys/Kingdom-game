@@ -278,9 +278,41 @@ const $=id=>document.getElementById(id),rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=n=>{n=Math.floor(n);const a=Math.abs(n);return a>=1e9?(n/1e9).toFixed(1).replace(/\.0$/,'')+'مليار':a>=1e6?(n/1e6).toFixed(1).replace(/\.0$/,'')+'م':a>=1e4?(n/1e3).toFixed(1).replace(/\.0$/,'')+'ك':n.toLocaleString('en-US')};
 const APP_VERSION=3;
+/* ===== العوالم: كل عالم له حفظ ولاعبون ومجموعات مستقلة ===== */
+const WORLDS_DEFAULT=[{id:'w1',name:'عالم الفجر',open:true}];
+let WORLDS=(()=>{try{const v=JSON.parse(localStorage.getItem('kd_worlds'));return Array.isArray(v)&&v.length?v:WORLDS_DEFAULT}catch(e){return WORLDS_DEFAULT}})();
+const saveWorlds=()=>{try{localStorage.setItem('kd_worlds',JSON.stringify(WORLDS))}catch(e){}};
+let WID=(()=>{try{return localStorage.getItem('kd_world')||'w1'}catch(e){return 'w1'}})();
+/* العالم الأول يبقى بمفاتيحه الأصلية حتى لا تضيع حسابات اللاعبين الحاليين */
+const SFX=()=>WID==='w1'?'':'_'+WID;
+const W=n=>WID==='w1'?n:WID+'_'+n;
+function pickWorldUI(){
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;z-index:999;display:grid;place-items:center;background:#08121f;font-family:Tajawal,sans-serif;color:#eef3f8;padding:16px';
+  ov.innerHTML='<div style="text-align:center;display:grid;gap:10px;width:min(360px,92%)"><h2 style="color:#ffdc8f;font-family:Lalezar;font-weight:400">اختر عالمك</h2><small style="color:#8da1b5">حسابك يبقى في العالم الذي تختاره. الانتقال لعالم آخر يعني بداية جديدة هناك.</small>'+
+    WORLDS.filter(w=>w.open).map(w=>`<button data-wid="${w.id}" style="padding:12px;border-radius:14px;font:inherit;font-weight:800;background:linear-gradient(180deg,#ffdc8f,#f2bd52);color:#231600;border:0;cursor:pointer">${w.name}</button>`).join('')+'</div>';
+  document.body.appendChild(ov);
+  ov.onclick=e=>{const b=e.target.closest('[data-wid]');if(!b)return;const nw=b.dataset.wid,old=localStorage.getItem('kd_world');
+    if(old===nw){ov.remove();return}
+    if(old){
+      /* مغادرة العالم تمسح حسابه فيه: الرجوع لاحقاً يبدأ من الصفر */
+      const sf=old==='w1'?'':'_'+old;
+      try{if(db&&uid)db.collection('players').doc(uid).set({name:S.name||'لاعب',power:0,gold:0,lvl:1,wall:0,ally:'',at:0})}catch(_){}
+      try{localStorage.removeItem('kd_online_v1'+sf);localStorage.removeItem('kd_uid'+sf)}catch(_){}
+    }
+    try{localStorage.setItem('kd_world',nw)}catch(_){}
+    location.reload()};
+}
+function switchWorld(){pickWorldUI()}
+function worldsHTML(){
+  return card('🌍','العوالم','أضف عالماً جديداً أو أغلقه. تُحفظ على هذا الجهاز فقط.',
+    `<input type="text" id="wNm" maxlength="24" placeholder="اسم العالم الجديد"><button class="bt j" data-dev="wadd">➕ إضافة</button>`,'--rc:#5db4f0')+
+  WORLDS.map(w=>card('🌐',esc(w.name),(w.open?'🟢 مفتوح':'🔴 مغلق')+' · '+esc(w.id),
+    `<button class="bt g" data-dev="wtog:${esc(w.id)}">${w.open?'إغلاق':'فتح'}</button>`)).join('');
+}
 let UPD=null;
 function showUpd(d){if(!d||!(+d.version>APP_VERSION))return;UPD=d;$('updT').textContent='🆕 '+(d.msg||'يتوفر تحديث جديد للعبة');$('updX').style.display=d.force?'none':'';$('upd').hidden=false}
-const KEY='kd_online_v1';
+const KEY=()=>'kd_online_v1'+SFX();
 const RN={gold:'🪙',wood:'🪵',stone:'🪨'};
 const BLD={farm:{res:'gold',rate:90,x:.27,y:.72},lumber:{res:'wood',rate:30,x:.8,y:.74},mine:{res:'stone',rate:20,x:.4,y:.86}};
 const BASEPOS={hunt:[0,29],cave:[-28,-8],tower:[28,-6]};
@@ -332,6 +364,7 @@ const hex6=n=>'#'+n.toString(16).padStart(6,'0');
 /* ===== الباس الملكي ===== */
 const PASS_MAX=30,PASS_STEP=80,PASS_SKIN={10:'ice',20:'inferno',30:'royal'};
 const PASS_GEMS=700; /* سعر الباس الملكي بالجواهر */
+const PASS_SEASON=1; /* رقم موسم الباس: ارفعه (2، 3، ...) عند نزول باس جديد فيُصفَّر تقدم الجميع ويُقفل المسار الملكي */
 function passRew(l,p){const r={};if(!p){r.g=800*l;if(l%2===0)r.w=120*l;else r.s=90*l;if(l%5===0)r.t=20*(l/5)}
  else{r.g=2500*l;r.w=300*l;r.s=220*l;if(l%5===0)r.t=60*(l/5);if(PASS_SKIN[l])r.skin=PASS_SKIN[l]}return r}
 const rewTxt=r=>[r.g&&fmt(r.g)+'🪙',r.w&&fmt(r.w)+'🪵',r.s&&fmt(r.s)+'🪨',r.t&&r.t+'⚔️',r.skin&&'🏰 '+(SKINS.find(s=>s.id===r.skin)||{n:''}).n].filter(Boolean).join(' · ');
@@ -381,8 +414,8 @@ let R3=null,CAM=null,RLS=[],RJS=[];
 const INC=[],incSeen={};let CH=[],DMi=[],DMo=[],chatTab='g',dmWith=null,lastChatSend=0;
 let S,db=null,uid='local',players=[],allies=[],online=false,lastSync=0,dirty=false,battle=null,shopTab='arm',rTab='weapon';
 function fresh(){const t=Date.now();return{name:'مملكة '+['الفجر','الظلام','الأساطير','الصقر'][ri(0,3)],gold:3000,wood:100,stone:60,troops:20,wall:0,lvl:1,exp:0,ally:'',t:{farm:t,lumber:t,mine:t},m:{got:{}},hs:{bella:1},act:['bella'],inv:{},tw:[0,0,0],march:null,wallBuild:null,mute:false,applied:[],seen:0,redeemedCodes:[],pxp:0,pf:[],pp:[],pass:false,skin:'default',skins:['default'],gear:{},eq:{},comp:{inf:20},divs:null,ev:{},evCl:{},rApplied:[]}}
-function load(){try{const o=JSON.parse(localStorage.getItem(KEY));if(o&&o.name){const f=fresh();return Object.assign(f,o,{m:Object.assign({got:{}},o.m)})}}catch(e){}return fresh()}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}dirty=true}
+function load(){try{const o=JSON.parse(localStorage.getItem(KEY()));if(o&&o.name){const f=fresh();return Object.assign(f,o,{m:Object.assign({got:{}},o.m)})}}catch(e){}return fresh()}
+function save(){try{localStorage.setItem(KEY(),JSON.stringify(S))}catch(e){}dirty=true}
 S=load();
 /* ترحيل الحفظ القديم: تشكيل الجنود والأقسام والعدادات */
 S.comp=S.comp||{inf:S.troops||20};if(!S.divs){S.divs=[[],[],[],[]];(S.act&&S.act.length?S.act:['bella']).slice(0,2).forEach((id,i)=>S.divs[i].push(id))}
@@ -406,13 +439,13 @@ function ready(k){const b=BLD[k];return Math.min(b.rate*10*(1+S.lvl*.2),(Date.no
 function collect(k){if(R3){openWin('gather');return}const v=Math.floor(ready(k));if(v<5){toast('لسه ما جهز — انتظر قليلاً');return}sfxCoin();S[BLD[k].res]+=v;S.t[k]=Date.now();mp('collect');gain(4);float(k,'+'+v+' '+RN[BLD[k].res]);save();hud()}
 function mp(k,n=1){S.m[k]=(S.m[k]||0)+n;if(['hunt','cave','win','train','collect','tower'].includes(k)){S.ev[k]=(S.ev[k]||0)+n}}
 function hud(){$('kName').textContent=S.name;$('lv').textContent='المستوى '+S.lvl;$('xp').style.width=(S.exp/(100*S.lvl)*100)+'%';$('rG').textContent=fmt(S.gold);$('rW').textContent=fmt(S.wood);$('rS').textContent=fmt(S.stone);$('pw').textContent=fmt(power());
- $('net').textContent=netErr?'🔴 '+netErr:online&&loadedP?'🟢 '+players.filter(p=>p.id!==uid&&Date.now()-p.at<864e5).length+' لاعب':'🟡 يتصل...';
+ $('net').textContent=netErr?'🔴 '+netErr:online&&loadedP?'🟢 متصل':'🟡 يتصل...';
  $('bMis').classList.toggle('dot',MIS.some(m=>(S.m[m[0]]||0)>=m[2]&&!S.m.got[m[0]]));$('bPass').classList.toggle('dot',passClaimable());try{$('chatB').classList.toggle('dot',dmUnread())}catch(e){}}
 
 let netErr='',loadedP=false,loadedA=false;
 async function net(){try{
- try{uid=localStorage.getItem('kd_uid')}catch(e){}
- if(!uid||uid==='local'){uid='u'+Math.random().toString(36).slice(2,10)+Date.now().toString(36);try{localStorage.setItem('kd_uid',uid)}catch(e){}}
+ try{uid=localStorage.getItem('kd_uid'+SFX())}catch(e){}
+ if(!uid||uid==='local'){uid='u'+Math.random().toString(36).slice(2,10)+Date.now().toString(36);try{localStorage.setItem('kd_uid'+SFX(),uid)}catch(e){}}
  const G='https://www.gstatic.com/firebasejs/10.12.2/';
  const A=await import(G+'firebase-app.js'),F=await import(G+'firebase-firestore.js');
  const app=A.initializeApp(FIREBASE_CONFIG);let fs=null,last='';
@@ -421,7 +454,7 @@ async function net(){try{
   catch(e){last=e.code||String(e.message||e).slice(0,40);if(last==='permission-denied'){fs=x;break}}}
  if(!fs){netErr=last||'no-connection';hud();return}
  const wrap=q=>({onSnapshot:(ok,er)=>F.onSnapshot(q,ok,er),where:(a,b,c)=>wrap(F.query(q,F.where(a,b,c))),limit:n=>wrap(F.query(q,F.limit(n)))});
- db={collection:n=>Object.assign(wrap(F.collection(fs,n)),{doc:id=>({set:o=>F.setDoc(F.doc(fs,n,id),o),onSnapshot:(ok,er)=>F.onSnapshot(F.doc(fs,n,id),ok,er)})})};
+ db={collection:n=>Object.assign(wrap(F.collection(fs,W(n))),{doc:id=>({set:o=>F.setDoc(F.doc(fs,W(n),id),o),onSnapshot:(ok,er)=>F.onSnapshot(F.doc(fs,W(n),id),ok,er)})})};
  const bad=e=>{netErr=e.code||'error';online=false;hud()};
  db.collection('players').onSnapshot(s=>{online=true;loadedP=true;netErr='';players=s.docs.map(x=>({id:x.id,...x.data()}));hud();refresh()},bad);
  db.collection('alliances').onSnapshot(s=>{allies=s.docs.map(x=>({id:x.id,...x.data()}));loadedA=true;if(S.ally&&S.allyInfo&&!allies.find(a=>a.id===S.ally))db.collection('alliances').doc(S.ally).set({name:S.allyInfo.name,owner:uid}).catch(()=>{});refresh()},bad);
@@ -437,7 +470,7 @@ async function net(){try{
 function sync(f){if(!db||(!dirty&&!f)||Date.now()-lastSync<4000)return;lastSync=Date.now();dirty=false;db.collection('players').doc(uid).set({name:S.name,power:Math.floor(power()*(1+.15*Math.min(5,shieldN(S)))),gold:Math.floor(S.gold),lvl:S.lvl,wall:S.wall,ally:S.ally,at:Date.now()}).then(()=>{if(online)netErr=''}).catch(e=>{netErr='write:'+(e.code||'error');hud()})}
 setInterval(()=>sync(),5000);
 function bots(){const P=Math.max(power(),400),g=Math.max(S.gold,2000);return[['قلعة الذئب',.55,.4],['حصن الصقر',.9,.7],['مملكة الجليد',1.35,1],['قلعة العقاب',.7,.5],['حصن الأسد',1.1,.8],['مملكة الرمال',1.6,1.2],['قلعة التنين',2,1.5],['حصن الظلام',2.6,2],['حصن الفجر',.8,.6],['قلعة النسر',1.2,.9],['مملكة الصحراء',1.5,1.1],['حصن الثلج',1.8,1.4],['قلعة الغابة',.6,.45],['مملكة اللهب',2.3,1.8],['حصن الغروب',.65,.5],['قلعة الرعد',1.7,1.3],['مملكة الضباب',2.1,1.6],['حصن الصخر',.95,.75],['قلعة الفجر',1.25,1],['مملكة الذئاب',2.8,2.2],['حصن النجوم',1.45,1.2],['قلعة الأفعى',.75,.55],['مملكة العاصفة',3.2,2.6],['حصن الجبل',1.05,.85]].map((b,i)=>({id:'bot'+i,name:b[0],power:Math.floor(P*b[1]),gold:Math.floor(g*b[2]),wall:i%4,bot:true}))}
-function foes(){const r=players.filter(p=>p.id!==uid&&Date.now()-p.at<864e5);return r.length<24?r.concat(bots().slice(0,24-r.length)):r}
+function foes(){return players.filter(p=>p.id!==uid&&Date.now()-p.at<864e5)}
 
 const ATK_MS=5*60*1000;
 const msT=ms=>{const s=Math.max(0,Math.ceil(ms/1000));return Math.floor(s/60)+'د '+String(s%60).padStart(2,'0')+'ث'};
@@ -572,7 +605,7 @@ function skinCards(){return SKINS.map(s=>{const own=S.skins.includes(s.id),on=S.
  return `<div class="card skc ${on?'rar':''}" style="${on?'--rc:#f2bd52':s.p<0?'--rc:#a672e8aa':''}"><div class="skv">${skinSVG(s)}</div><div class="g"><b>${esc(s.n)}${tag}</b><small>${esc(s.d||'')}${own?' · ✅ تملكها':''}</small><small class="fx">✨ ${SKX[s.id]||'الشكل الكلاسيكي الأصلي'}</small>${btn}</div></div>`}).join('')}
 function passHTML(){const lv=passLv(),pxp=S.pxp||0,fr=lv>=PASS_MAX?1:(pxp-lv*PASS_STEP)/PASS_STEP;
  let h=`<div class="card rar" style="--rc:#f2bd52"><div class="e">👑</div><div class="g"><b>الباس الملكي — مستوى ${lv}/${PASS_MAX}</b><small>${S.pass?'✅ المسار الملكي مفعّل':'🔒 المسار الملكي مقفل — المسار المجاني مفتوح للجميع'} · التقدم من الصيد والكهوف والمهام والهجوم</small><div class="bar"><i style="width:${fr*100}%"></i></div></div><button class="bt j s" data-plv="1" ${lv>=PASS_MAX||S.gold<8000?'disabled':''}>+1 مستوى 8,000🪙</button><button class="bt r s" data-pall="1">استلام الكل</button></div>`;
- if(!S.pass)h+=`<div class="card rar" style="--rc:#5db4f0"><div class="e">💎</div><div class="g"><b>افتح المسار الملكي</b><small>جوائز أكبر بـ3 أضعاف + سكانات قلعة حصرية — ${PASS_GEMS} 💎 · رصيدك ${fmt(S.gems||0)} 💎</small></div><button class="bt" data-gpass="1">💎 ${PASS_GEMS} شراء</button><button class="bt g" data-gopen="1">شحن</button></div>`;
+ if(!S.pass)h+=`<div class="card rar" style="--rc:#5db4f0"><div class="e">💎</div><div class="g"><b>افتح المسار الملكي</b><small>جوائز أكبر بـ3 أضعاف + سكانات قلعة حصرية — ${S.pFree?'🎁 مجاني لك هذا الموسم (هدية العرض)':PASS_GEMS+' 💎 · رصيدك '+fmt(S.gems||0)+' 💎'}<br>🎁 اشترِ الباس مرتين والثالث مجاني (${Math.min(S.pBuys||0,2)}/2)</small></div><button class="bt" data-gpass="1">${S.pFree?'🎁 استلمه مجاناً':'💎 '+PASS_GEMS+' شراء'}</button>${S.pFree?'':'<button class="bt g" data-gopen="1">شحن</button>'}</div>`;
  h+=`<div class="prow ph"><span>المستوى</span><span>🆓 مجاني</span><span>👑 ملكي</span></div>`;
  const cell=(prem,l)=>{const r=passRew(l,prem),got=(prem?S.pp:S.pf).includes(l),can=l<=lv&&(!prem||S.pass);return `<div class="pcell ${prem?'pr':''} ${got?'got':''}"><small>${rewTxt(r)}</small>${got?'✅':`<button class="bt s ${prem?'':'j'}" data-pc="${prem?'p':'f'}:${l}" ${can?'':'disabled'}>${prem&&!S.pass?'🔒':'استلام'}</button>`}</div>`};
  for(let l=1;l<=PASS_MAX;l++)h+=`<div class="prow ${l<=lv?'on':''}"><b class="plv">${l}</b>${cell(false,l)}${cell(true,l)}</div>`;
@@ -661,7 +694,7 @@ function render(){let h='';const P=power();
    (DLQ.run?`<div class="prog"><i style="width:${DLQ.n/DLQ.t*100}%"></i></div><small style="color:var(--dim)">جارٍ التحميل ${DLQ.n}/${DLQ.t}</small>`:'')+
    `<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="bt j" data-dlg="all" ${DLQ.run?'disabled':''}>⬇️ الكل</button><button class="bt" data-dlg="glb" ${DLQ.run?'disabled':''}>🧊 المجسمات</button><button class="bt" data-dlg="snd" ${DLQ.run?'disabled':''}>🔊 الأصوات</button><button class="bt g" data-fs="1">⛶ ملء الشاشة</button></div>`+
    L.map(i=>card(i.t==='img'?(HI[i.id]?`<img src="${HI[i.id].src}" alt="">`:'🖼️'):i.t==='vid'?'🎬':i.t==='glb'?'🧊':'🔊',esc(i.label),dlTxt(i.k),`<button class="bt ${RSTAT[i.k]==='ok'?'g':''} s" data-dlk="${i.k}" ${RSTAT[i.k]==='busy'?'disabled':''}>${RSTAT[i.k]==='ok'?'↻':'⬇️'}</button>`)).join('')}
- if(cur==='name')h=`<input type="text" id="nm" maxlength="18" value="${esc(S.name)}"><button class="bt" data-nm="1">حفظ</button><small style="color:var(--dim);text-align:center">معرّفك: ${esc(uid)}</small><div class="rbar" style="justify-content:center">${Object.keys(LANGS).map(k=>`<button class="bt ${LANG===k?'j':'g'}" data-lang="${k}">🌐 ${LANGS[k]}</button>`).join('')}</div><button class="bt g" data-w="skins">🏰 سكانات القلعة</button><button class="bt g" data-w="res">📦 موارد اللعبة</button>`
+ if(cur==='name')h=`<input type="text" id="nm" maxlength="18" value="${esc(S.name)}"><button class="bt" data-nm="1">حفظ</button><small style="color:var(--dim);text-align:center">معرّفك: ${esc(uid)}</small><div class="rbar" style="justify-content:center">${Object.keys(LANGS).map(k=>`<button class="bt ${LANG===k?'j':'g'}" data-lang="${k}">🌐 ${LANGS[k]}</button>`).join('')}</div><button class="bt g" data-w="skins">🏰 سكانات القلعة</button><button class="bt g" data-w="res">📦 موارد اللعبة</button><button class="bt g" data-wchg="1">🌍 تغيير العالم</button>`
  if(cur==='result'){const a=arg;h=`<div style="text-align:center;padding:10px"><div style="font-size:64px">${a.win?'🏆':'💀'}</div><h2 style="font-family:var(--fd);font-weight:400;font-size:24px;color:${a.win?'var(--gold2)':'var(--ember)'}">${a.win?'نصر':'هزيمة'} أمام ${esc(a.t)}</h2><p style="margin:8px 0">${a.msg}</p><button class="bt" data-close="1" style="width:100%">متابعة</button></div>`}
  if(cur==='ally'){const mine=S.ally&&allyOf(S.ally);if(db&&!loadedA&&!mine)h='<div class="card"><div class="e">⏳</div><div class="g"><b>جارٍ تحميل التحالفات...</b><small>انتظر ثوانٍ، الاتصال بالخادم أبطأ من المعتاد</small></div></div>';else if(mine){const ms=members(mine.id);
   const myR=RLS.filter(r=>ms.some(m=>m.id===r.by)&&r.eta>Date.now());
@@ -722,7 +755,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('button,#lvlBox')
 
  if(t.id==='mute'){S.mute=!S.mute;save();applyMute();toast(S.mute?'🔇 تم كتم الصوت':'🔊 تم تشغيل الصوت');return}
  if(t.id==='updB'){if(UPD&&UPD.url){const w=window.open(UPD.url,'_blank');if(!w)location.href=UPD.url}return}if(t.id==='updX'){$('upd').hidden=true;return}
- if(d.vid){vsrc(d.vid).then(src=>openWin('video',{id:d.vid,src}));return}
+ if(d.wchg){switchWorld();return}if(d.vid){vsrc(d.vid).then(src=>openWin('video',{id:d.vid,src}));return}
  if(d.fs){try{document.documentElement.requestFullscreen()}catch(e){toast('اضبط ملء الشاشة من إعدادات Median','bad')}return}if(t.id==='wx'||d.close){closeWin();return}if(t.id==='lvlBox'){openWin('name');return}if(t.id==='bAtk'){openWin('attack');return}if(d.w){if(d.w==='chat'&&cur==='chat'){closeWin();return}openWin(d.w);return}
  if(d.plv){const lv=passLv();if(lv<PASS_MAX&&S.gold>=8000){S.gold-=8000;S.pxp=(lv+1)*PASS_STEP;toast('👑 مستوى الباس '+(lv+1),'good')}}
  if(d.pc){const [tr,ls]=d.pc.split(':'),lv=+ls,arr=tr==='p'?S.pp:S.pf;if(lv<=passLv()&&!arr.includes(lv)&&(tr==='f'||S.pass)){const r=passRew(lv,tr==='p');giveRew(r);arr.push(lv);toast('🎁 '+rewTxt(r),'good')}}
@@ -899,7 +932,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target&&e.target.i
 let devOK=false;
 const DEVH=1662313701;
 const devHash=s=>{let h=2166136261;s=String(s||'').trim().toLowerCase();for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0}return h>>>0};
-function devHTML(){return resetConfirmHTML()+devHTML0()+resetListHTML()}
+function devHTML(){return worldsHTML()+resetConfirmHTML()+devHTML0()+resetListHTML()}
 function devHTML0(){const b=(a,t,c)=>`<button class="bt ${c||''}" data-dev="${a}">${t}</button>`;
  return card('🛠️','لوحة المطوّر','مخفية — فُتحت بالكود الخاص · كل شيء هنا مجاني',b('close','إغلاق','g'),'--rc:#a672e8')+
  card('🪙','الذهب','أضف ذهباً فوراً',b('g1','+1م')+b('g2','+100م','j')+b('g3','+1مليار','r'))+
@@ -936,6 +969,8 @@ function devAct(a){if(!devOK)return;
  if(a==='rsall'){if(resetTargets().length){devPend={t:'all'};render();$('wb').scrollTop=0}return}
  if(a==='rsno'){devPend=null;render();return}
  if(a==='rsyes'){const d=devPend;devPend=null;if(d)resetPlayers(d.t==='all'?resetTargets():[d.p]);render();return}
+ if(a==='wadd'){const n=(($('wNm')||{}).value||'').trim();if(!n){toast('اكتب اسم العالم','bad');return}WORLDS.push({id:'w'+Date.now().toString(36),name:n,open:true});saveWorlds();render();toast('🌍 تمت إضافة '+n,'good');return}
+ if(a.startsWith('wtog:')){const w=WORLDS.find(x=>x.id===a.slice(5));if(w){w.open=!w.open;saveWorlds();render()}return}
  if(a==='close'){closeWin();return}
  if(a==='g1')S.gold+=1e6;if(a==='g2')S.gold+=1e8;if(a==='g3')S.gold+=1e9;
  if(a==='w1')S.wood+=1e6;if(a==='s1')S.stone+=1e6;if(a==='t1')S.troops+=10000;if(a==='lvl')S.lvl+=10;
@@ -1782,7 +1817,7 @@ async function chatTranslate(id){const m=CH.concat(DMi,DMo).find(x=>x.id===id);i
  chatRefresh()}
 applyLang();
 
-init3D();loadArt();buildWorld();requestAnimationFrame(frame);setInterval(hud,4000);setInterval(uiTick,1000);setInterval(buildWorld,3000);hud();applyMute();net();restore();
+init3D();loadArt();buildWorld();requestAnimationFrame(frame);setInterval(hud,4000);setInterval(uiTick,1000);setInterval(buildWorld,3000);hud();applyMute();if(!localStorage.getItem('kd_world'))pickWorldUI();else{net();restore()}
 
 /* ╔═══════════════ نظام الجواهر 💎 وأكواد الشحن ═══════════════╗ */
 (function(){
@@ -1805,7 +1840,9 @@ const GMMS=[
 
 /* ===== حالة ===== */
 let gmSel=null,gmMeth=null,gmBusy=false,gmGen='';
-function gmEnsure(){S.gems=S.gems||0;S.gemTotal=S.gemTotal||0;S.gPk=S.gPk||{};S.gmClaimed=S.gmClaimed||[];S.gCodes=S.gCodes||[]}
+function gmEnsure(){S.gems=S.gems||0;S.gemTotal=S.gemTotal||0;S.gPk=S.gPk||{};S.gmClaimed=S.gmClaimed||[];S.gCodes=S.gCodes||[];S.pBuys=S.pBuys||0;S.pFree=!!S.pFree;
+ if(S.pSeason==null)S.pSeason=1;
+ if(S.pSeason!==PASS_SEASON){S.pSeason=PASS_SEASON;S.pass=false;S.pxp=0;S.pf=[];S.pp=[];try{save()}catch(e){}}}
 gmEnsure();
 
 /* ===== الأكواد: NW + حرف الباقة + 6 رموز عشوائية + 5 رموز تحقق ===== */
@@ -1828,8 +1865,7 @@ async function gmRedeem(){gmEnsure();if(gmBusy)return;const inp=$('gmcode');cons
  try{if(await gmGet(p.code)){S.gCodes.push(p.code);save();toast('هذا الكود مستخدم مسبقاً','bad');return}
   await db.collection('gemcodes').doc(p.code).set({uid,name:S.name,pack:p.idx,t:Date.now()});
   const pk=GMPACKS[p.idx];S.gCodes.push(p.code);S.gems+=pk.g;S.gemTotal+=pk.g;giveRew({g:pk.g*GOLD_PER_GEM});
-  S.gPk[p.idx]=(S.gPk[p.idx]||0)+1;let msg='💎 تم شحن '+fmt(pk.g)+' جوهرة + هدية '+fmt(pk.g*GOLD_PER_GEM)+' 🪙';
-  if(S.gPk[p.idx]%2===0){S.gems+=pk.g;msg+=' + 🎁 باقة مجانية '+fmt(pk.g)+' 💎'}
+  let msg='💎 تم شحن '+fmt(pk.g)+' جوهرة + هدية '+fmt(pk.g*GOLD_PER_GEM)+' 🪙';
   save();hud();toast(msg,'good');if(inp)inp.value='';render()}
  catch(e){toast('تعذّر التحقق ('+((e&&e.code)||'خطأ')+') — تأكد من قواعد Firestore ومن الاتصال','bad')}
  finally{gmBusy=false}}
@@ -1844,8 +1880,8 @@ function gmHTML(){gmEnsure();
   if(gmMeth){const m=GMPAY[gmMeth];
    h+=card(m.e,'الدفع عبر '+m.n,`1) حوّل ${pk.usd}$ (أو ما يعادله) إلى: <b style="color:var(--gold2);user-select:text">${esc(m.acc)}</b><br>2) أرسل إثبات الدفع + معرّفك <b style="user-select:text">${esc(uid)}</b> إلى: ${esc(GMCONTACT)}<br>3) ستستلم كود شحن — أدخله في الخانة بالأعلى ثم اضغط تفعيل.`,'','--rc:#f2bd52')}}
  else{
-  h+='<small style="color:var(--dim)">باقات الجواهر — 🎁 اشترِ باقتين من نفس الفئة والثالثة مجانية</small>'+GMPACKS.map((pk,i)=>{const n=(S.gPk[i]||0)%2;
-   return card('💎',fmt(pk.g)+' 💎 — '+pk.usd+'$',`هدية شحن: ${fmt(pk.g*GOLD_PER_GEM)} 🪙 · 🎁 الثالثة مجانية (${n}/2)${pk.g===PASS_GEMS?' · يكفي للباس الملكي 👑':''}`,`<button class="bt" data-gpk="${i}">شحن</button>`,i===2?'--rc:#f2bd52':'')}).join('');
+  h+='<small style="color:var(--dim)">باقات الجواهر</small>'+GMPACKS.map((pk,i)=>{
+   return card('💎',fmt(pk.g)+' 💎 — '+pk.usd+'$',`هدية شحن: ${fmt(pk.g*GOLD_PER_GEM)} 🪙 ${pk.g===PASS_GEMS?' · يكفي للباس الملكي 👑':''}`,`<button class="bt" data-gpk="${i}">شحن</button>`,i===2?'--rc:#f2bd52':'')}).join('');
   h+='<small style="color:var(--dim)">🏆 جوائز الشحن (إجمالي ما شحنته: '+fmt(S.gemTotal)+' 💎)</small>'+GMMS.map((m,i)=>{const got=S.gmClaimed.includes(i),ok=S.gemTotal>=m.need;
    return card(got?'✅':'🎁','اشحن '+fmt(m.need)+' 💎 إجمالاً',rewTxt(m.r),got?'<span class="tag">✅</span>':`<button class="bt j" data-gms="${i}" ${ok?'':'disabled'}>استلم</button>`)}).join('')}
  return h}
@@ -1858,14 +1894,14 @@ function gmDevHTML(){return card('💎','مولّد أكواد الجواهر','
 
 /* ===== ربط بالنظام الحالي ===== */
 const _render=render;
-render=function(){const iv=$('gmcode'),val=iv?iv.value:'',foc=!!iv&&document.activeElement===iv;_render();
+render=function(){gmEnsure();const iv=$('gmcode'),val=iv?iv.value:'',foc=!!iv&&document.activeElement===iv;_render();
  if(cur==='shop'){const tabs=document.querySelector('.shop-tabs');
   if(tabs)tabs.insertAdjacentHTML('beforeend',`<button class="stab ${shopTab==='gem'?'active':''}" data-stab="gem">💎 الجواهر</button>`);
   if(shopTab==='gem')$('wb').insertAdjacentHTML('beforeend',gmHTML());
   const i2=$('gmcode');if(i2){if(val)i2.value=val;if(foc)i2.focus()}}};
 const _dev=devHTML;devHTML=function(){return _dev()+gmDevHTML()};
 const _hud=hud;hud=function(){_hud();const e=$('rGm');if(e)e.textContent=fmt(S.gems||0)};
-const _fresh=fresh;fresh=function(){return Object.assign(_fresh(),{gems:0,gemTotal:0,gPk:{},gmClaimed:[],gCodes:[]})};
+const _fresh=fresh;fresh=function(){return Object.assign(_fresh(),{gems:0,gemTotal:0,gPk:{},gmClaimed:[],gCodes:[],pSeason:PASS_SEASON,pBuys:0,pFree:false})};
 
 /* عدّاد الجواهر في الشريط العلوي */
 const res=document.querySelector('.res');
@@ -1881,8 +1917,9 @@ document.addEventListener('click',e=>{
  if(d.gback){gmSel=null;gmMeth=null;render();return}
  if(d.gredeem){gmRedeem();return}
  if(d.gpass){if(S.pass){toast('الباس مفعّل عندك مسبقاً','good');return}
-  if(S.gems<PASS_GEMS){toast('تحتاج '+PASS_GEMS+' 💎 — رصيدك '+fmt(S.gems),'bad');openGems();return}
-  S.gems-=PASS_GEMS;S.pass=true;save();hud();toast('👑 تم تفعيل الباس الملكي','good');render();return}
+  if(!S.pFree&&S.gems<PASS_GEMS){toast('تحتاج '+PASS_GEMS+' 💎 — رصيدك '+fmt(S.gems),'bad');openGems();return}
+  if(S.pFree){S.pFree=false;S.pBuys=0;S.pass=true;save();hud();toast('🎁 تم تفعيل الباس الملكي مجاناً — هدية العرض','good');render();return}
+  S.gems-=PASS_GEMS;S.pass=true;S.pBuys=(S.pBuys||0)+1;let m2='👑 تم تفعيل الباس الملكي';if(S.pBuys>=2){S.pFree=true;m2+=' — 🎁 الباس القادم مجاني!'}save();hud();toast(m2,'good');render();return}
  if(d.gms!==undefined){const i=+d.gms,m=GMMS[i];if(m&&S.gemTotal>=m.need&&!S.gmClaimed.includes(i)){S.gmClaimed.push(i);giveRew(m.r);save();hud();toast('🎁 '+rewTxt(m.r),'good');render()}return}
  if(d.gdev){if(!devOK)return;
   if(d.gdev==='gen'){const idx=+$('gmP').value,n=Math.max(1,Math.min(50,+$('gmN').value||1)),L=[];for(let i=0;i<n;i++)L.push(gmFmtCode(gmMake(idx)));gmGen=(gmGen?gmGen+'\n':'')+GMPACKS[idx].g+'💎 → '+L.join('\n'+GMPACKS[idx].g+'💎 → ');render();return}
