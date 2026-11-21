@@ -417,6 +417,30 @@ function passDevHTML(){const f=(id,l,val)=>`<label style="font-size:12px;color:v
  return card('👑','إعداد الباس','غيّر القيم ثم اضغط نشر. تغيير رقم الموسم يصفّر تقدم الباس للجميع ويقفل المسار الملكي.','','--rc:#f2bd52')+
  `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">${f('pSeason','رقم الموسم',PASS_SEASON)}${f('pMax','أعلى مستوى',PASS_MAX)}${f('pStep','نقاط لكل مستوى',PASS_STEP)}${f('pGems','سعر الباس الملكي 💎',PASS_GEMS)}${f('pFg','مجاني: ذهب/مستوى',R.fg)}${f('pFw','مجاني: خشب (زوجي)',R.fw)}${f('pFs','مجاني: حجر (فردي)',R.fs)}${f('pFt','مجاني: جنود كل 5',R.ft)}${f('pPg','ملكي: ذهب/مستوى',R.pg)}${f('pPw','ملكي: خشب/مستوى',R.pw)}${f('pPs','ملكي: حجر/مستوى',R.ps)}${f('pPt','ملكي: جنود كل 5',R.pt)}${f('pSkLvl','سكن عند مستوى',0)}<label style="font-size:12px;color:var(--dim)">معرّف السكن<input type="text" id="pSkId" placeholder="مثال: cs0_1" style="width:100%;padding:8px;border-radius:9px;background:#0a1626;color:var(--ink);border:1px solid var(--line);direction:ltr"></label></div>`+
  `<div class="rbar"><button class="bt j" data-dev="ppub">🚀 نشر الباس</button></div>`}
+/* ===== الأعلام والسيطرة على العالم =====
+   نقاط السيطرة: الكهوف والموارد. التحالف الذي يملك 60% منها ويحافظ عليها 24 ساعة يسيطر على العالم. */
+let FLG={},CTRL=null,flagGrp=null,flagSig='';
+function flagPoints(){const P=[];(S.cp||[]).forEach((p,i)=>P.push({id:'c'+i,x:p[0],z:p[1]}));(S.nodes||[]).forEach((n,i)=>{if(n.on)P.push({id:'n'+i,x:n.x,z:n.z})});return P}
+function flagSet(id){if(!db||!S.ally)return;db.collection('flags').doc(id).set({owner:S.ally,name:(S.allyInfo&&S.allyInfo.name)||'تحالف',t:Date.now()}).catch(()=>{})}
+function allyCol(s){return (hsh(s)&0xffffff)|0x505050}
+function rebuildFlags(){if(!R3||!SC)return;if(!flagGrp){flagGrp=new THREE.Group();SC.add(flagGrp)}
+ const pts=flagPoints(),sig=pts.map(p=>p.id+(FLG[p.id]?FLG[p.id].owner:'')).join(',');if(sig===flagSig)return;flagSig=sig;
+ while(flagGrp.children.length){const c=flagGrp.children.pop();c.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material&&o.material.map)o.material.map.dispose()})}
+ pts.forEach(p=>{const f=FLG[p.id];if(!f||!f.owner)return;const g=new THREE.Group();g.position.set(p.x,tH(p.x,p.z),p.z);
+  const pole=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,7,6),M3(0xdddddd));pole.position.y=3.5;g.add(pole);
+  const cl=new THREE.Mesh(new THREE.PlaneGeometry(2.6,1.5).translate(1.3,0,0),new THREE.MeshBasicMaterial({color:allyCol(f.owner),side:THREE.DoubleSide}));cl.position.set(0,6,0);g.add(cl);
+  const l=lab3(f.name||'تحالف',300,64);l.scale.set(5,1.1,1);l.position.set(0,8.3,0);g.add(l);
+  flagGrp.add(g)})}
+function ctrlTick(){if(!db)return;const total=flagPoints().length||1,cnt={},nm={};
+ Object.values(FLG).forEach(f=>{if(f&&f.owner){cnt[f.owner]=(cnt[f.owner]||0)+1;nm[f.owner]=f.name}});
+ let top=null,n=0;for(const k in cnt)if(cnt[k]>n){n=cnt[k];top=k}
+ const share=n/total;
+ if(CTRL&&CTRL.owner&&(top!==CTRL.owner||share<.6)){db.collection('config').doc('control').set({}).catch(()=>{});return}
+ if(!CTRL?.owner&&top&&share>=.6)db.collection('config').doc('control').set({owner:top,name:nm[top]||'تحالف',since:Date.now()}).catch(()=>{})}
+function flagTick(){try{rebuildFlags();ctrlTick()}catch(e){}}
+function ctrlLine(){if(!CTRL||!CTRL.owner)return'<small style="color:var(--dim)">لا يسيطر أحد على العالم بعد — التحالف الذي يملك 60% من النقاط ويحافظ عليها 24 ساعة يسيطر.</small>';
+ const full=Date.now()-CTRL.since>=864e5;
+ return `<div class="card rar" style="--rc:#f2bd52"><div class="g"><b>👑 يسيطر عليه: ${esc(CTRL.name)}</b><small>${full?'سيطرة مكتملة (24 ساعة)':'يحافظ على السيطرة'}</small></div></div>`}
 const hex6=n=>'#'+n.toString(16).padStart(6,'0');
 
 /* ===== الباس الملكي ===== */
@@ -525,6 +549,8 @@ async function net(){try{
  db.collection('events').where('end','>',Date.now()-6048e5).limit(30).onSnapshot(s=>{EVL=s.docs.map(x=>({id:x.id,...x.data()}));S.evBase=S.evBase||{};EVL.forEach(e=>{if(S.evBase[e.id]===undefined)S.evBase[e.id]=S.ev[e.type]||0});save();if(cur==='events')render()},()=>{});
  db.collection('config').doc('update').onSnapshot(d=>{if(d.exists())showUpd(d.data())},()=>{});
  db.collection('config').doc('live').onSnapshot(d=>applyLive(d.exists()?d.data():{}),()=>{});
+ db.collection('flags').onSnapshot(s=>{FLG={};s.docs.forEach(x=>FLG[x.id]=x.data());flagTick();if(cur)render()},()=>{});
+ db.collection('config').doc('control').onSnapshot(d=>{const was=CTRL&&CTRL.owner;CTRL=d.exists()?d.data():null;if(CTRL&&CTRL.owner&&CTRL.owner!==was)toast('👑 '+CTRL.name+' سيطر على العالم','good');if(cur)render()},()=>{});
  sync(true);hud()}catch(e){netErr=e.code||String(e.message||e).slice(0,40);online=false;hud()}}
 function sync(f){if(!db||(!dirty&&!f)||Date.now()-lastSync<4000)return;lastSync=Date.now();dirty=false;db.collection('players').doc(uid).set({name:S.name,power:Math.floor(power()*(1+.15*Math.min(5,shieldN(S)))),gold:Math.floor(S.gold),lvl:S.lvl,wall:S.wall,ally:S.ally,at:Date.now()}).then(()=>{if(online)netErr=''}).catch(e=>{netErr='write:'+(e.code||'error');hud()})}
 setInterval(()=>sync(),5000);
@@ -617,11 +643,11 @@ function endBattle(){const b=battle;battle=null;let msg;
  b.win?sfxWin():sfxLose();save();hud();openWin('result',{win:b.win,msg,t:b.n})}
 const MK={
  hunt:i=>{const m=S.mons&&S.mons[i];if(!m||!m.on){toast('اختفى هذا الوحش','bad');return null}const L=m.L,[e,n]=monI(L),p=monP(L);return{n:n+' لفل '+L,e,p,el:monEl(L),gold:Math.floor(p*.25),exp:3+L,onWin:()=>{mp('hunt');killMon(i)}}},
- cave:i=>{const c=CAVES[i],L=(S.cl&&S.cl[i])||c[2],p=Math.floor(monP(L)*1.6);return{n:c[0],e:c[1],p,el:c[3],gold:Math.floor(p*.6),wood:Math.floor(p*.05),stone:Math.floor(p*.04),exp:10+L,onWin:()=>{mp('cave');S.cv=S.cv||[];S.cv[i]=(S.cv[i]||0)+1;S.cl=S.cl||[];S.cl[i]=pickMonL(1)}}},
+ cave:i=>{const c=CAVES[i],L=(S.cl&&S.cl[i])||c[2],p=Math.floor(monP(L)*1.6);return{n:c[0],e:c[1],p,el:c[3],gold:Math.floor(p*.6),wood:Math.floor(p*.05),stone:Math.floor(p*.04),exp:10+L,onWin:()=>{mp('cave');S.cv=S.cv||[];S.cv[i]=(S.cv[i]||0)+1;S.cl=S.cl||[];S.cl[i]=pickMonL(1);flagSet('c'+i)}}},
  tower:t=>{const f=S.tw[t]+1;if(f>50){toast('أنهيت هذا البرج!','good');return null}const p=towP(t,f);return{n:TOW[t][0]+' — طابق '+f,e:TOW[t][1],p,el:TOW[t][4],gold:Math.floor(p*.35)*(f===50?10:1),exp:5+f,onWin:()=>{S.tw[t]=f;mp('tower');if(f===50)toast('🏆 قهرت '+TOW[t][0],'good')}}},
  gather:i=>{const n=S.nodes&&S.nodes[i];if(!n||!n.on){toast('نُهب هذا الموقع — ستتجدد لاحقاً','bad');return null}
   const L2=RESL[n.k],amt=Math.floor((n.k==='farm'?700:n.k==='lumber'?260:170)*(1+S.lvl*.25)*(hasSpec('gather')?1.4:1));
-  return{n:L2[0],e:L2[1],p:0,el:null,gold:n.k==='farm'?amt:0,wood:n.k==='lumber'?amt:0,stone:n.k==='mine'?amt:0,exp:8,onWin:()=>{mp('collect');depleteNode(i)}}},
+  return{n:L2[0],e:L2[1],p:0,el:null,gold:n.k==='farm'?amt:0,wood:n.k==='lumber'?amt:0,stone:n.k==='mine'?amt:0,exp:8,onWin:()=>{mp('collect');depleteNode(i);flagSet('n'+i)}}},
  pvp:id=>{const f=foes().find(x=>x.id===id);if(!f||(f.ally&&S.ally&&f.ally===S.ally))return null;const loot=Math.floor(Math.min((f.gold||0)*.25,40000*S.lvl));return{n:f.name,e:f.bot?'🤖':'🏰',p:f.power*(1+(f.wall||0)*.1),gold:loot,exp:25,loss:.3,onWin:()=>{mp('win');if(!f.bot&&db)db.collection('raids').doc(f.id+'_'+Date.now()).set({to:f.id,from:uid,name:S.name,loot,t:Date.now()}).catch(()=>{})}}}
 };
 const hunt=L=>launch('hunt',L),cave=i=>launch('cave',i),tower=t=>launch('tower',t),attack=id=>launch('pvp',id);
@@ -697,7 +723,7 @@ function roomHTML(){const x=HER.find(v=>v[0]===arg.id),lv=S.hs[x[0]],r=RK[x[2]],
  return `<div class="room2">${left}<div class="r-l r-r">${spNote}${stats}${acts}${tabs}${list}</div></div>`}
 function render(){let h='';const P=power();
  if(cur==='attack'||cur==='worldmap'){const L0=foes(),L=(cur==='worldmap'&&arg&&arg.id)?L0.slice().sort((a,b)=>(b.id===arg.id)-(a.id===arg.id)):L0;
-  h=`<small style="color:var(--dim)">قوتك ${fmt(P)} — اختر مملكة للهجوم عليها؛ سيخرج جيشك من قلعتك ويسير إليها</small>`+L.map(f=>{const e=f.power*(1+(f.wall||0)*.1);const rlBtn=(!f.bot&&db&&S.ally&&!(f.ally&&f.ally===S.ally))?`<button class="bt j" data-rl="${esc(f.id)}">🚩 حشد</button>`:'';
+  h=ctrlLine()+`<small style="color:var(--dim)">قوتك ${fmt(P)} — اختر مملكة للهجوم عليها؛ سيخرج جيشك من قلعتك ويسير إليها</small>`+L.map(f=>{const e=f.power*(1+(f.wall||0)*.1);const rlBtn=(!f.bot&&db&&S.ally&&!(f.ally&&f.ally===S.ally))?`<button class="bt j" data-rl="${esc(f.id)}">🚩 حشد</button>`:'';
   return card(f.bot?'🤖':'🏰',(arg&&arg.id===f.id?'🎯 ':'')+esc(f.name)+(f.ally&&allyOf(f.ally)?' ['+esc(allyOf(f.ally).name)+']':''),`قوة ${fmt(f.power)} · سور ${f.wall||0} · ${dif(P,e)}`,(f.ally&&S.ally&&f.ally===S.ally?'<span class="tag">🤝 حليف</span>':`<button class="bt r" data-atk="${esc(f.id)}">هجوم</button>`+rlBtn))}).join('')+(online?'':'<small style="color:var(--dim)">الممالك الحقيقية تظهر أونلاين.</small>')}
  if(cur==='hunt'||cur==='mon')h=monHTML();
  if(cur==='gather')h=gatherWin();
@@ -873,16 +899,16 @@ try{screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landsc
 const FONT='"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
 
 /* ╔═══════════════ بند 10: كهوف ووحوش موزعة عشوائياً على الخريطة ═══════════════╗ */
-const MONN=8;let poiGroup=null,poiSig='';
+const MONN=40;let poiGroup=null,poiSig='';
 function landSpot(minR,maxR,avoid,ex){for(let k=0;k<500;k++){const a=Math.random()*6.283,r=Math.sqrt(minR*minR+Math.random()*(maxR*maxR-minR*minR)),x=Math.cos(a)*r,z=Math.sin(a)*r,h=tH(x,z);if(h<WL+1.4||h>8)continue;if(Math.abs(tH(x+4,z)-h)>2.2||Math.abs(tH(x,z+4)-h)>2.2)continue;if(avoid.some(p=>Math.hypot(p.x-x,p.z-z)<(p.d||ex)))continue;return{x,z}}return null}
 function pickMonL(k){const Lp=1+Math.log(Math.max(power(),120)/120)/Math.log(1.35),r=Math.random();let d=r<.4?-8+Math.random()*6:r<.75?-2+Math.random()*5:3+Math.random()*11;if(k)d+=3;return clamp(Math.round(Lp+d),1,100)}
 function ensurePOI(){if(!R3||!SITES.length||typeof tH!=='function')return;let ch=0;
  if(!Array.isArray(S.cp)||S.cp.length!==CAVES.length){const av=SITES.slice();S.cp=CAVES.map(()=>{const p=landSpot(110,POIR,av,40)||SITES[ri(0,SITES.length-1)];av.push({x:p.x,z:p.z,d:140});return[p.x,p.z]});ch=1}
  if(!Array.isArray(S.cl)||S.cl.length!==CAVES.length){S.cl=CAVES.map(()=>pickMonL(1));ch=1}
- if(S.rv!==3){S.rv=3;S.mons=[];ch=1}
+ if(S.rv!==4){S.rv=4;S.mons=[];ch=1}
  if(!Array.isArray(S.mons))S.mons=[];while(S.mons.length<MONN){S.mons.push({x:0,z:0,L:1,rt:0,on:0});ch=1}
  const av=SITES.concat(S.cp.map(a=>({x:a[0],z:a[1],d:110})),S.mons.filter(m=>m.on).map(m=>({x:m.x,z:m.z,d:110})));
- S.mons.forEach(m=>{if(!m.on&&Date.now()>=(m.rt||0)){const p=landSpot(70,POIR+20,av,25);if(p){m.x=p.x;m.z=p.z;m.L=pickMonL();m.on=1;av.push({x:p.x,z:p.z,d:110});ch=1}}});
+ S.mons.forEach((m,i)=>{if(!m.on&&Date.now()>=(m.rt||0)){const seg=Math.max(1,Math.floor(SITES.length/MONN));const p=SITES[(i*seg+ri(0,seg-1))%SITES.length];if(p){m.x=p.x;m.z=p.z;m.L=pickMonL();m.on=1;ch=1}}});
  if(ch)save()}
 function killMon(i){const m=S.mons&&S.mons[i];if(m){m.on=0;m.rt=Date.now()+60000+Math.random()*90000}}
 function mkCaveObj(i,x,y,z){const c=CAVES[i],col={ظلام:0x5a4a78,ثلج:0x9fc8e0,نار:0xa8553a,برق:0x8a8ae0}[c[3]]||0x7a7088,g=new THREE.Group();g.position.set(x,y,z);
@@ -1882,7 +1908,7 @@ async function chatTranslate(id){const m=CH.concat(DMi,DMo).find(x=>x.id===id);i
  chatRefresh()}
 applyLang();
 
-init3D();loadArt();buildWorld();requestAnimationFrame(frame);setInterval(hud,4000);setInterval(uiTick,1000);setInterval(buildWorld,3000);hud();applyMute();if(!localStorage.getItem('kd_world'))pickWorldUI();else{net();restore()}
+init3D();loadArt();buildWorld();requestAnimationFrame(frame);setInterval(hud,4000);setInterval(uiTick,1000);setInterval(buildWorld,3000);setInterval(flagTick,4000);hud();applyMute();if(!localStorage.getItem('kd_world'))pickWorldUI();else{net();restore()}
 
 /* ╔═══════════════ نظام الجواهر 💎 وأكواد الشحن ═══════════════╗ */
 (function(){
