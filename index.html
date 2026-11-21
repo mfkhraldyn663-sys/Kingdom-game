@@ -420,19 +420,58 @@ function passDevHTML(){const f=(id,l,val)=>`<label style="font-size:12px;color:v
 /* ===== الأعلام والسيطرة على العالم =====
    نقاط السيطرة: الكهوف والموارد. التحالف الذي يملك 60% منها ويحافظ عليها 24 ساعة يسيطر على العالم. */
 let FLG={},CTRL=null,flagGrp=null,flagSig='';
+const FLAG_TTL=1728e5;
+function nearSites(){return SITES.filter(s=>Math.hypot(s.x,s.z)<POIR)}
+function monSites(){const c=S.cp||[];return nearSites().filter(s=>!c.some(p=>Math.hypot(p[0]-s.x,p[1]-s.z)<1))}
+function myRole(){const a=allyOf(S.ally);if(!a)return'';if(a.owner===uid)return'leader';return(a.roles||{})[uid]||'member'}
+function roleName(pid){const a=allyOf(S.ally);if(!a)return'';if(a.owner===pid)return'👑 زعيم';return(a.roles||{})[pid]==='officer'?'⭐ ضابط':'عضو'}
+function roleBtn(pid){const a=allyOf(S.ally);if(!a||myRole()!=='leader'||pid===uid)return'';
+ return (a.roles||{})[pid]==='officer'?`<button class="bt g s" data-role="${pid}|member">إنزال</button>`:`<button class="bt j s" data-role="${pid}|officer">ترقية لضابط</button>`}
+function setRole(pid,r){const a=allyOf(S.ally);if(!a||myRole()!=='leader'||!db)return;const roles=Object.assign({},a.roles||{});if(r==='member')delete roles[pid];else roles[pid]=r;
+ db.collection('alliances').doc(a.id).set({name:a.name,owner:a.owner,roles}).then(()=>toast('✅ تم تحديث الرتبة','good')).catch(()=>toast('تعذّر تحديث الرتبة','bad'))}
+function allyFlags(a){return Object.values(FLG).filter(f=>f&&f.owner===a&&Date.now()-(f.t||0)<FLAG_TTL).length}
+/* ===== اقتصاد التحالف: مستوى، خبرة، خزينة، ضريبة، سحب بشروط، وحد أعضاء ===== */
+const ALLY_MAXLVL=10,ALLY_MAXTAX=15;
+const allyNeed=l=>1000*l*l;
+const allyCap=a=>Math.min(50,5+((a.lvl||1)*5));
+const allyData=()=>allyOf(S.ally)||null;
+function saveAlly(a,patch){const base={name:a.name,owner:a.owner,roles:a.roles||{},lvl:a.lvl||1,xp:a.xp||0,tax:a.tax||0,treasury:a.treasury||{g:0,w:0,s:0},contrib:a.contrib||{},claims:a.claims||{}};
+ db.collection('alliances').doc(a.id).set(Object.assign(base,patch)).catch(()=>toast('تعذّر حفظ التحالف','bad'))}
+function addXp(xp,lvl){let L=lvl;while(xp>=allyNeed(L)&&L<ALLY_MAXLVL){xp-=allyNeed(L);L++;toast('🏯 ارتقى التحالف للمستوى '+L,'good')}return{xp,lvl:L}}
+function allyDonate(sk,tk,n){const a=allyData();if(!a||!db)return;if((S[sk]||0)<n){toast('موارد غير كافية','bad');return}
+ S[sk]-=n;const t=Object.assign({g:0,w:0,s:0},a.treasury||{});t[tk]=(t[tk]||0)+n;const c=Object.assign({},a.contrib||{});c[uid]=(c[uid]||0)+n;
+ const r=addXp((a.xp||0)+Math.floor(n/100),a.lvl||1);saveAlly(a,{treasury:t,contrib:c,xp:r.xp,lvl:r.lvl});save();hud();toast('🤝 تبرّعت بـ '+fmt(n),'good')}
+function allyClaim(sk,tk){const a=allyData();if(!a||!db)return;
+ if((a.lvl||1)<3){toast('السحب يفتح عند مستوى تحالف 3','bad');return}
+ if(((a.contrib||{})[uid]||0)<3000){toast('تحتاج مساهمة 3,000 على الأقل','bad');return}
+ if(Date.now()-((a.claims||{})[uid]||0)<864e5){toast('تقدر تسحب مرة كل 24 ساعة','bad');return}
+ const t=Object.assign({g:0,w:0,s:0},a.treasury||{});const amt=Math.min(Math.floor((t[tk]||0)*.1),2000*(a.lvl||1));
+ if(amt<=0){toast('الخزينة فاضية','bad');return}
+ t[tk]-=amt;const cm=Object.assign({},a.claims||{});cm[uid]=Date.now();S[sk]+=amt;saveAlly(a,{treasury:t,claims:cm});save();hud();toast('🎁 سحبت '+fmt(amt),'good')}
+function allySetTax(dl){const a=allyData();if(!a||myRole()!=='leader')return;const v=clamp((a.tax||0)+dl,0,ALLY_MAXTAX);saveAlly(a,{tax:v});toast('ضريبة التحالف '+v+'%','good')}
+function allyTax(amount){const a=allyData();if(!a||!a.tax||!db)return;const cut=Math.floor(amount*a.tax/100);if(cut<=0)return;S.gold-=cut;
+ const t=Object.assign({g:0,w:0,s:0},a.treasury||{});t.g=(t.g||0)+cut;const r=addXp((a.xp||0)+Math.floor(cut/100),a.lvl||1);saveAlly(a,{treasury:t,xp:r.xp,lvl:r.lvl})}
+function allyPanelHTML(a){const L=a.lvl||1,xp=a.xp||0,need=allyNeed(L),t=a.treasury||{g:0,w:0,s:0},c=(a.contrib||{})[uid]||0;
+ return `<div class="card rar" style="--rc:#46c792"><div class="g"><b>🏯 مستوى ${L}/${ALLY_MAXLVL} · الأعضاء ${members(a.id).length}/${allyCap(a)}</b><small>الخزينة: ${fmt(t.g||0)} 🪙 · ${fmt(t.w||0)} 🪵 · ${fmt(t.s||0)} 🪨</small><small>خبرة ${fmt(xp)}/${fmt(need)} · ضريبة ${a.tax||0}% · مساهمتك ${fmt(c)}</small><div class="bar"><i style="width:${Math.min(100,xp/need*100)}%"></i></div></div></div>`+
+ `<div class="rbar"><button class="bt j s" data-ad="g10000">تبرع 10,000🪙</button><button class="bt j s" data-ad="w1000">تبرع 1,000🪵</button><button class="bt j s" data-ad="s1000">تبرع 1,000🪨</button></div>`+
+ `<div class="rbar"><button class="bt s" data-ad="cg">سحب 🪙</button><button class="bt s" data-ad="cw">سحب 🪵</button><button class="bt s" data-ad="cs">سحب 🪨</button></div>`+
+ (myRole()==='leader'?`<div class="rbar"><button class="bt g s" data-ad="tax:+">ضريبة +1%</button><button class="bt g s" data-ad="tax:-">ضريبة -1%</button></div>`:'')+
+ `<small style="color:var(--dim)">السحب: يفتح عند مستوى 3، ومساهمة 3,000 على الأقل، ومرة كل 24 ساعة، وبحد 10% من الخزينة. الضريبة تنقص من أرباح الأعضاء وتروح للخزينة، وأقصاها ${ALLY_MAXTAX}%.</small>`}
 function flagPoints(){const P=[];(S.cp||[]).forEach((p,i)=>P.push({id:'c'+i,x:p[0],z:p[1]}));(S.nodes||[]).forEach((n,i)=>{if(n.on)P.push({id:'n'+i,x:n.x,z:n.z})});return P}
-function flagSet(id){if(!db||!S.ally)return;db.collection('flags').doc(id).set({owner:S.ally,name:(S.allyInfo&&S.allyInfo.name)||'تحالف',t:Date.now()}).catch(()=>{})}
+function flagSet(id){if(!db||!S.ally)return;if(!['leader','officer'].includes(myRole())){toast('وضع الأعلام للزعيم والضباط فقط','bad');return}db.collection('flags').doc(id).set({owner:S.ally,name:(S.allyInfo&&S.allyInfo.name)||'تحالف',t:Date.now()}).catch(()=>{})}
 function allyCol(s){return (hsh(s)&0xffffff)|0x505050}
 function rebuildFlags(){if(!R3||!SC)return;if(!flagGrp){flagGrp=new THREE.Group();SC.add(flagGrp)}
  const pts=flagPoints(),sig=pts.map(p=>p.id+(FLG[p.id]?FLG[p.id].owner:'')).join(',');if(sig===flagSig)return;flagSig=sig;
  while(flagGrp.children.length){const c=flagGrp.children.pop();c.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material&&o.material.map)o.material.map.dispose()})}
- pts.forEach(p=>{const f=FLG[p.id];if(!f||!f.owner)return;const g=new THREE.Group();g.position.set(p.x,tH(p.x,p.z),p.z);
+ pts.forEach(p=>{const f=FLG[p.id];if(!f||!f.owner||Date.now()-(f.t||0)>=FLAG_TTL)return;const g=new THREE.Group();g.position.set(p.x,tH(p.x,p.z),p.z);
   const pole=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,7,6),M3(0xdddddd));pole.position.y=3.5;g.add(pole);
   const cl=new THREE.Mesh(new THREE.PlaneGeometry(2.6,1.5).translate(1.3,0,0),new THREE.MeshBasicMaterial({color:allyCol(f.owner),side:THREE.DoubleSide}));cl.position.set(0,6,0);g.add(cl);
   const l=lab3(f.name||'تحالف',300,64);l.scale.set(5,1.1,1);l.position.set(0,8.3,0);g.add(l);
+  const area=new THREE.Mesh(new THREE.CircleGeometry(70,48),new THREE.MeshBasicMaterial({color:allyCol(f.owner),transparent:true,opacity:.28,depthWrite:false,side:THREE.DoubleSide}));area.rotation.x=-Math.PI/2;area.position.y=.3;g.add(area);
+  const edge=new THREE.Mesh(new THREE.RingGeometry(68,71,64),new THREE.MeshBasicMaterial({color:allyCol(f.owner),transparent:true,opacity:.9,depthWrite:false,side:THREE.DoubleSide}));edge.rotation.x=-Math.PI/2;edge.position.y=.32;g.add(edge);
   flagGrp.add(g)})}
 function ctrlTick(){if(!db)return;const total=flagPoints().length||1,cnt={},nm={};
- Object.values(FLG).forEach(f=>{if(f&&f.owner){cnt[f.owner]=(cnt[f.owner]||0)+1;nm[f.owner]=f.name}});
+ Object.values(FLG).forEach(f=>{if(f&&f.owner&&Date.now()-(f.t||0)<FLAG_TTL){cnt[f.owner]=(cnt[f.owner]||0)+1;nm[f.owner]=f.name}});
  let top=null,n=0;for(const k in cnt)if(cnt[k]>n){n=cnt[k];top=k}
  const share=n/total;
  if(CTRL&&CTRL.owner&&(top!==CTRL.owner||share<.6)){db.collection('config').doc('control').set({}).catch(()=>{});return}
@@ -511,7 +550,7 @@ const gUsed=id=>Object.values(S.eq||{}).filter(e=>e&&(e.weapon===id||e.armor===i
 const heroPow=s=>s.act.reduce((t,id)=>{const h=HER.find(x=>x[0]===id);return t+(h&&s.hs[id]?hp_(h,s.hs[id])+gearPow(s,id):0)},0);
 const invPow=s=>[...ARM.map(a=>[a[0],a[2]]),...SPL.map(a=>[a[0],a[2]])].reduce((t,[k,at])=>t+((s.inv&&s.inv[k])||0)*at,0);
 const shieldN=s=>SPL.reduce((t,a)=>t+(a[3]?((s.inv&&s.inv[a[0]])||0):0),0);
-function power(s=S){const mem=s.ally?Math.max(1,members(s.ally).length):1;return Math.floor((troopPow(s)+s.wall*300+heroPow(s)+invPow(s))*(1+s.lvl*.05)*(1+Math.min(.2,.02*(mem-1))))}
+function power(s=S){const mem=s.ally?Math.max(1,members(s.ally).length):1;return Math.floor((troopPow(s)+s.wall*300+heroPow(s)+invPow(s))*(1+s.lvl*.05)*(1+Math.min(.2,.02*(mem-1)))*(1+Math.min(.2,.02*allyFlags(s.ally))))}
 function toast(t,k=''){const d=document.createElement('div');d.className='toast '+k;d.textContent=t;$('toasts').appendChild(d);setTimeout(()=>d.remove(),2900)}
 const passLv=()=>Math.min(PASS_MAX,Math.floor((S.pxp||0)/PASS_STEP));
 function passClaimable(){const lv=passLv();for(let l=1;l<=lv;l++){if(!S.pf.includes(l))return true;if(S.pass&&!S.pp.includes(l))return true}return false}
@@ -638,7 +677,7 @@ function updBattle(t){const b=battle;if(!BT||!b)return;const e=clamp((performanc
 function stopBattle3D(){if(BT){SC.remove(BT.g);BT=null}}
 function endBattle(){const b=battle;battle=null;let msg;
  if(b.win){let m2=1;if((b.kind==='hunt'||b.kind==='cave')&&hasSpec('hunt'))m2=1.3;
-  S.gold+=Math.floor(b.gold*m2);S.wood+=Math.floor((b.wood||0)*m2);S.stone+=Math.floor((b.stone||0)*m2);gain(b.exp);`غنمت ${fmt(b.gold)} 🪙`+(b.wood?` ${fmt(b.wood)} 🪵`:'')+(b.stone?` ${fmt(b.stone)} 🪨`:'')+` و ${b.exp} خبرة`;b.onWin&&b.onWin()}
+  S.gold+=Math.floor(b.gold*m2);allyTax(Math.floor(b.gold*m2));S.wood+=Math.floor((b.wood||0)*m2);S.stone+=Math.floor((b.stone||0)*m2);gain(b.exp);`غنمت ${fmt(b.gold)} 🪙`+(b.wood?` ${fmt(b.wood)} 🪵`:'')+(b.stone?` ${fmt(b.stone)} 🪨`:'')+` و ${b.exp} خبرة`;b.onWin&&b.onWin()}
  else{let l=Math.ceil(compTotal()*b.loss);if(hasSpec('freeze'))l=Math.ceil(l*.75);reduceComp(l);gain(2);msg=`خسرت ${l} جندي${hasSpec('freeze')?' (❄️ التجميد خفّف الخسائر)':''} — قوّ جيشك وحاول مجدداً`}
  b.win?sfxWin():sfxLose();save();hud();openWin('result',{win:b.win,msg,t:b.n})}
 const MK={
@@ -787,7 +826,7 @@ function render(){let h='';const P=power();
    return card('🚩','حشد على '+esc(tgt.name)+(mine2?' (قائد أنت)':''),'بقيادة '+esc(r.byName)+' · يهاجم خلال '+msT(r.eta-Date.now())+' · قوة الحشد '+fmt(jn.reduce((t,j)=>t+(j.pw||0),r.pw||0))+' · انضم '+jn.length,
    mine2||S.march?'':'<button class="bt j" data-rlj="'+r.id+'">انضم بالجيش</button>')}).join(''):'';
   h=rlH;
-  h+=card('🏯',esc(mine.name),`${ms.length} عضو · قوة التحالف ${fmt(ms.reduce((t,p)=>t+(p.id===uid?P:p.power||0),0))} · مكافأة قوة +${Math.min(20,2*(ms.length-1))}%`,'<button class="bt r" data-leave="1">مغادرة</button>')+ms.map(p=>card(p.id===uid?'👑':'🛡️',esc(p.id===uid?S.name:p.name)+(p.id===uid?' (أنت)':''),'قوة '+fmt(p.id===uid?P:p.power||0),'')).join('')}
+  h+=allyPanelHTML(mine)+card('🏯',esc(mine.name),`${ms.length} عضو · قوة التحالف ${fmt(ms.reduce((t,p)=>t+(p.id===uid?P:p.power||0),0))} · مكافأة قوة +${Math.min(20,2*(ms.length-1))}%`,'<button class="bt r" data-leave="1">مغادرة</button>')+ms.map(p=>card(p.id===uid?'👑':'🛡️',esc(p.id===uid?S.name:p.name)+(p.id===uid?' (أنت)':''),'قوة '+fmt(p.id===uid?P:p.power||0)+' · '+roleName(p.id),roleBtn(p.id))).join('')}
   else h=`<div class="card"><input type="text" id="an" maxlength="16" placeholder="اسم تحالفك الجديد"><button class="bt" data-mk="1">إنشاء</button></div><small style="color:var(--dim)">التحالفات المتاحة:</small>`+(allies.length?allies.map(a=>card('🏯',esc(a.name),members(a.id).length+' عضو',`<button class="bt j" data-join="${esc(a.id)}">انضمام</button>`)).join(''):'<small style="color:var(--dim)">لا توجد تحالفات بعد — كن أول من ينشئ واحداً.</small>')}
  const _cin=$('ci'),_cvv=_cin?_cin.value:'',_cff=!!_cin&&document.activeElement===_cin;const _rr=document.querySelector('.r-r'),_st=_rr?_rr.scrollTop:0;$('wb').innerHTML=h;const _r2=document.querySelector('.r-r');if(_r2&&_st)_r2.scrollTop=_st;const nm=$('nm');if(nm)nm.focus();{const c2=$('ci');if(c2&&_cvv)c2.value=_cvv;if(c2&&_cff)c2.focus();const cl=$('chl');if(cl)cl.scrollTop=cl.scrollHeight}}
 
@@ -841,6 +880,8 @@ document.addEventListener('click',e=>{const t=e.target.closest('button,#lvlBox')
  if(t.id==='mute'){S.mute=!S.mute;save();applyMute();toast(S.mute?'🔇 تم كتم الصوت':'🔊 تم تشغيل الصوت');return}
  if(t.id==='updB'){if(UPD&&UPD.url){const w=window.open(UPD.url,'_blank');if(!w)location.href=UPD.url}return}if(t.id==='updX'){$('upd').hidden=true;return}
  if(d.hsk!==undefined){const [hid,sid]=d.hsk.split('|');S.hsk=S.hsk||{};if(sid)S.hsk[hid]=sid;else delete S.hsk[hid];if(HV3)HV3.id='';save();render();return}
+ if(d.role){const [pid,r]=d.role.split('|');setRole(pid,r);return}
+ if(d.ad){const x=d.ad;if(x==='g10000')allyDonate('gold','g',10000);else if(x==='w1000')allyDonate('wood','w',1000);else if(x==='s1000')allyDonate('stone','s',1000);else if(x==='cg')allyClaim('gold','g');else if(x==='cw')allyClaim('wood','w');else if(x==='cs')allyClaim('stone','s');else if(x==='tax:+')allySetTax(1);else if(x==='tax:-')allySetTax(-1);return}
  if(d.wchg){switchWorld();return}if(d.vid){vsrc(d.vid).then(src=>openWin('video',{id:d.vid,src}));return}
  if(d.fs){try{document.documentElement.requestFullscreen()}catch(e){toast('اضبط ملء الشاشة من إعدادات Median','bad')}return}if(t.id==='wx'||d.close){closeWin();return}if(t.id==='lvlBox'){openWin('name');return}if(t.id==='bAtk'){openWin('attack');return}if(d.w){if(d.w==='chat'&&cur==='chat'){closeWin();return}openWin(d.w);return}
  if(d.plv){const lv=passLv();if(lv<PASS_MAX&&S.gold>=8000){S.gold-=8000;S.pxp=(lv+1)*PASS_STEP;toast('👑 مستوى الباس '+(lv+1),'good')}}
@@ -881,8 +922,8 @@ document.addEventListener('click',e=>{const t=e.target.closest('button,#lvlBox')
  if(d.evc){const e=EVL.find(x=>x.id===d.evc);if(e&&!S.evCl[e.id]&&evProg(e)>=e.goal){S.evCl[e.id]=1;giveRew(e.rew||{});toast('🎁 حصلت على جائزة الحدث!','good')}}
  if(d.mis){const m=MIS.find(x=>x[0]===d.mis);if(m&&(S.m[m[0]]||0)>=m[2]&&!S.m.got[m[0]]){S.m.got[m[0]]=1;S.gold+=m[3];gain(20);toast('+'+fmt(m[3])+' 🪙','good')}}
  if(d.nm){const v=$('nm').value.trim().slice(0,18);if(v){S.name=v;save();hud();closeWin();return}}
- if(d.mk){const v=$('an').value.trim().slice(0,16);if(!v)return;if(!db){toast('التحالفات تحتاج اتصالاً بالإنترنت','bad');return}const id='a'+Date.now().toString(36);S.ally=id;S.allyInfo={id,name:v};mp('ally');save();sync(true);hud();render();toast('🏯 تم إنشاء التحالف','good');db.collection('alliances').doc(id).set({name:v,owner:uid}).catch(e=>{S.ally='';S.allyInfo=null;save();hud();render();toast('تعذّر الإنشاء: '+(e.code||'خطأ'),'bad')});return}
- if(d.join){const a=allyOf(d.join);S.ally=d.join;S.allyInfo=a?{id:a.id,name:a.name}:null;mp('ally');toast('🏯 انضممت للتحالف','good')}
+ if(d.mk){const v=$('an').value.trim().slice(0,16);if(!v)return;if(!db){toast('التحالفات تحتاج اتصالاً بالإنترنت','bad');return}const id='a'+Date.now().toString(36);S.ally=id;S.allyInfo={id,name:v};mp('ally');save();sync(true);hud();render();toast('🏯 تم إنشاء التحالف','good');db.collection('alliances').doc(id).set({name:v,owner:uid,roles:{}}).catch(e=>{S.ally='';S.allyInfo=null;save();hud();render();toast('تعذّر الإنشاء: '+(e.code||'خطأ'),'bad')});return}
+ if(d.join){const a=allyOf(d.join);if(a&&members(a.id).length>=allyCap(a)){toast('التحالف مكتمل — الحد '+allyCap(a)+' عضو','bad');return}S.ally=d.join;S.allyInfo=a?{id:a.id,name:a.name}:null;mp('ally');toast('🏯 انضممت للتحالف','good')}
  if(d.leave){S.ally='';S.allyInfo=null}
  if(d.atk||d.cave||d.tow)return;save();sync(true);hud();if(cur)render()});
 
@@ -899,16 +940,16 @@ try{screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landsc
 const FONT='"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
 
 /* ╔═══════════════ بند 10: كهوف ووحوش موزعة عشوائياً على الخريطة ═══════════════╗ */
-const MONN=40;let poiGroup=null,poiSig='';
+const MONN=200;let poiGroup=null,poiSig='';
 function landSpot(minR,maxR,avoid,ex){for(let k=0;k<500;k++){const a=Math.random()*6.283,r=Math.sqrt(minR*minR+Math.random()*(maxR*maxR-minR*minR)),x=Math.cos(a)*r,z=Math.sin(a)*r,h=tH(x,z);if(h<WL+1.4||h>8)continue;if(Math.abs(tH(x+4,z)-h)>2.2||Math.abs(tH(x,z+4)-h)>2.2)continue;if(avoid.some(p=>Math.hypot(p.x-x,p.z-z)<(p.d||ex)))continue;return{x,z}}return null}
 function pickMonL(k){const Lp=1+Math.log(Math.max(power(),120)/120)/Math.log(1.35),r=Math.random();let d=r<.4?-8+Math.random()*6:r<.75?-2+Math.random()*5:3+Math.random()*11;if(k)d+=3;return clamp(Math.round(Lp+d),1,100)}
 function ensurePOI(){if(!R3||!SITES.length||typeof tH!=='function')return;let ch=0;
- if(!Array.isArray(S.cp)||S.cp.length!==CAVES.length){const av=SITES.slice();S.cp=CAVES.map(()=>{const p=landSpot(110,POIR,av,40)||SITES[ri(0,SITES.length-1)];av.push({x:p.x,z:p.z,d:140});return[p.x,p.z]});ch=1}
+ if(!Array.isArray(S.cp)||S.cp.length!==CAVES.length||S.cpv!==5){S.cpv=5;const NS=nearSites();S.cp=CAVES.map((c,k)=>{const p=NS[Math.floor((k+1)*NS.length/(CAVES.length+1))]||SITES[0];return[p.x,p.z]});ch=1}
  if(!Array.isArray(S.cl)||S.cl.length!==CAVES.length){S.cl=CAVES.map(()=>pickMonL(1));ch=1}
- if(S.rv!==4){S.rv=4;S.mons=[];ch=1}
+ if(S.rv!==5){S.rv=5;S.mons=[];ch=1}
  if(!Array.isArray(S.mons))S.mons=[];while(S.mons.length<MONN){S.mons.push({x:0,z:0,L:1,rt:0,on:0});ch=1}
  const av=SITES.concat(S.cp.map(a=>({x:a[0],z:a[1],d:110})),S.mons.filter(m=>m.on).map(m=>({x:m.x,z:m.z,d:110})));
- S.mons.forEach((m,i)=>{if(!m.on&&Date.now()>=(m.rt||0)){const seg=Math.max(1,Math.floor(SITES.length/MONN));const p=SITES[(i*seg+ri(0,seg-1))%SITES.length];if(p){m.x=p.x;m.z=p.z;m.L=pickMonL();m.on=1;ch=1}}});
+ S.mons.forEach((m,i)=>{if(!m.on&&Date.now()>=(m.rt||0)){const NS=monSites();const p=NS[i]||null;if(p){m.x=p.x;m.z=p.z;m.L=pickMonL();m.on=1;ch=1}}});
  if(ch)save()}
 function killMon(i){const m=S.mons&&S.mons[i];if(m){m.on=0;m.rt=Date.now()+60000+Math.random()*90000}}
 function mkCaveObj(i,x,y,z){const c=CAVES[i],col={ظلام:0x5a4a78,ثلج:0x9fc8e0,نار:0xa8553a,برق:0x8a8ae0}[c[3]]||0x7a7088,g=new THREE.Group();g.position.set(x,y,z);
@@ -1746,7 +1787,27 @@ function draw3D(t){
  R3.render(SC,CAM)}
 
 function pick3(cx_,cy_){const v=new THREE.Vector2(cx_/W_*2-1,-(cy_/H_)*2+1);RC.setFromCamera(v,CAM);const hs=RC.intersectObjects(PICK,true);for(const h of hs){let o=h.object;while(o&&!(o.userData&&(o.userData.k||o.userData.isWorldCastle||o.userData.isPOI)))o=o.parent;if(o&&!(o.userData.isWorldCastle&&!(worldCastlesGroup&&worldCastlesGroup.visible)))return o.userData}return null}
-function tap(u){if(!u)return;if(u.isWorldCastle){openWin('worldmap',{id:u.id});return}if(u.isRes){openWin('gather',{i:u.i});return}if(u.isPOI){openWin(u.kind==='cave'?'cave':'mon',{i:u.i});return}const k=u.k;if(!k)return;if(['farm','lumber','mine'].includes(k))collect(k);else if(k==='castle')openWin('skins');else if(WN[k])openWin(k)}
+/* ===== مربع صغير قرب الهدف بدل النوافذ الكاملة ===== */
+let TIPEL=null;
+function hideTip(){if(TIPEL){TIPEL.remove();TIPEL=null}}
+function tipAt(px,py,title,sub,btn,fn){hideTip();const st=$('stage');if(!st)return;
+ const d=document.createElement('div');d.className='glass';
+ d.style.cssText=`position:absolute;z-index:16;width:200px;padding:9px 10px;border-radius:14px;direction:rtl;text-align:center;left:${clamp(px-100,8,W_-208)}px;top:${clamp(py-118,8,H_-120)}px`;
+ d.innerHTML=`<b style="font-family:var(--fd);font-weight:400;color:var(--gold2);font-size:17px">${esc(title)}</b><small style="display:block;color:var(--dim);margin:3px 0 7px">${esc(sub)}</small>`;
+ const b=document.createElement('button');b.className='bt r s';b.textContent=btn;
+ b.onclick=e=>{e.stopPropagation();hideTip();fn()};d.appendChild(b);st.appendChild(d);TIPEL=d}
+function tipOn(x,y,z,title,sub,btn,fn){const v=new THREE.Vector3(x,y,z).project(CAM);tipAt((v.x+1)/2*W_,(1-v.y)/2*H_,title,sub,btn,fn)}
+function tap(u){if(!u){hideTip();return}
+ if(u.isWorldCastle){const f=foes().find(x=>x.id===u.id),w=WPOS[u.id];if(!f||!w)return;
+  return tipOn(w.x,tH(w.x,w.z)+9,w.z,f.name,'قوة '+fmt(f.power)+' · '+dif(power(),f.power*(1+(f.wall||0)*.1)),'⚔️ هجوم',()=>attack(u.id))}
+ if(u.isRes){const n=S.nodes&&S.nodes[u.i];if(!n||!n.on)return;const L2=RESL[n.k];
+  const amt=Math.floor((n.k==='farm'?700:n.k==='lumber'?260:170)*(1+S.lvl*.25)*(hasSpec('gather')?1.4:1));
+  return tipOn(n.x,tH(n.x,n.z)+7,n.z,L2[0],'غنيمة ~'+fmt(amt)+' '+RN[L2[2]],'🚩 أرسل الجيش',()=>launch('gather',u.i))}
+ if(u.isPOI&&u.kind==='mon'){const m=S.mons&&S.mons[u.i];if(!m||!m.on)return;const mi=monI(m.L);
+  return tipOn(m.x,tH(m.x,m.z)+7,m.z,mi[1]+' — لفل '+m.L,'قوة '+fmt(monP(m.L))+' · الغنيمة '+fmt(monP(m.L)*.25)+' 🪙','⚔️ قاتل',()=>hunt(u.i))}
+ if(u.isPOI&&u.kind==='cave'){const c=CAVES[u.i],p=S.cp&&S.cp[u.i];if(!c||!p)return;const L=(S.cl&&S.cl[u.i])||c[2],pw=Math.floor(monP(L)*1.6);
+  return tipOn(p[0],tH(p[0],p[1])+9,p[1],c[0]+' — لفل '+L,'قوة '+fmt(pw),'⛰️ ادخل',()=>cave(u.i))}
+ const k=u.k;if(!k)return;if(['farm','lumber','mine'].includes(k))collect(k);else if(k==='castle')openWin('skins');else if(WN[k])openWin(k)}
 
 const HIT=[['farm',.27,.72,'c'],['lumber',.8,.74,'c'],['mine',.4,.86,'c'],['tower',.91,.52,'tower'],['shop',.64,.84,'shop'],['castle',.5,.56,'k']];
 let dn=null,pinch=0,pinchA=null;
