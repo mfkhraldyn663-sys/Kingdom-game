@@ -429,7 +429,7 @@ function roleBtn(pid){const a=allyOf(S.ally);if(!a||myRole()!=='leader'||pid===u
  return (a.roles||{})[pid]==='officer'?`<button class="bt g s" data-role="${pid}|member">إنزال</button>`:`<button class="bt j s" data-role="${pid}|officer">ترقية لضابط</button>`}
 function setRole(pid,r){const a=allyOf(S.ally);if(!a||myRole()!=='leader'||!db)return;const roles=Object.assign({},a.roles||{});if(r==='member')delete roles[pid];else roles[pid]=r;
  db.collection('alliances').doc(a.id).set({name:a.name,owner:a.owner,roles}).then(()=>toast('✅ تم تحديث الرتبة','good')).catch(()=>toast('تعذّر تحديث الرتبة','bad'))}
-function allyFlags(a){return Object.values(FLG).filter(f=>f&&f.owner===a&&Date.now()-(f.t||0)<FLAG_TTL&&(f.done||0)<=Date.now()).length}
+function allyFlags(a){const A=allAnchors(),C=connSet(A);return A.filter(x=>x.o===a&&!x.fort&&C.has(x.id)).length}
 /* ===== اقتصاد التحالف: مستوى، خبرة، خزينة، ضريبة، سحب بشروط، وحد أعضاء ===== */
 const ALLY_MAXLVL=10,ALLY_MAXTAX=15;
 const allyNeed=l=>1000*l*l;
@@ -454,27 +454,38 @@ function allySetTax(dl){const a=allyData();if(!a||myRole()!=='leader')return;con
 function allyTax(amount){const a=allyData();if(!a||!a.tax||!db)return;const cut=Math.floor(amount*a.tax/100);if(cut<=0)return;S.gold-=cut;
  const t=Object.assign({g:0,w:0,s:0},a.treasury||{});t.g=(t.g||0)+cut;const r=addXp((a.xp||0)+Math.floor(cut/100),a.lvl||1);saveAlly(a,{treasury:t,xp:r.xp,lvl:r.lvl})}
 function allyPanelHTML(a){const L=a.lvl||1,xp=a.xp||0,need=allyNeed(L),t=a.treasury||{g:0,w:0,s:0},c=(a.contrib||{})[uid]||0;
- return flagBuildingHTML()+`<div class="card rar" style="--rc:#46c792"><div class="g"><b>🏯 مستوى ${L}/${ALLY_MAXLVL} · الأعضاء ${members(a.id).length}/${allyCap(a)}</b><small>الخزينة: ${fmt(t.g||0)} 🪙 · ${fmt(t.w||0)} 🪵 · ${fmt(t.s||0)} 🪨</small><small>خبرة ${fmt(xp)}/${fmt(need)} · ضريبة ${a.tax||0}% · مساهمتك ${fmt(c)}</small><div class="bar"><i style="width:${Math.min(100,xp/need*100)}%"></i></div></div></div>`+
+ return fortHTML()+flagBuildingHTML()+`<div class="card rar" style="--rc:#46c792"><div class="g"><b>🏯 مستوى ${L}/${ALLY_MAXLVL} · الأعضاء ${members(a.id).length}/${allyCap(a)}</b><small>الخزينة: ${fmt(t.g||0)} 🪙 · ${fmt(t.w||0)} 🪵 · ${fmt(t.s||0)} 🪨</small><small>خبرة ${fmt(xp)}/${fmt(need)} · ضريبة ${a.tax||0}% · مساهمتك ${fmt(c)}</small><div class="bar"><i style="width:${Math.min(100,xp/need*100)}%"></i></div></div></div>`+
  `<div class="rbar"><button class="bt j s" data-ad="g10000">تبرع 10,000🪙</button><button class="bt j s" data-ad="w1000">تبرع 1,000🪵</button><button class="bt j s" data-ad="s1000">تبرع 1,000🪨</button></div>`+
  `<div class="rbar"><button class="bt s" data-ad="cg">سحب 🪙</button><button class="bt s" data-ad="cw">سحب 🪵</button><button class="bt s" data-ad="cs">سحب 🪨</button></div>`+
  (myRole()==='leader'?`<div class="rbar"><button class="bt g s" data-ad="tax:+">ضريبة +1%</button><button class="bt g s" data-ad="tax:-">ضريبة -1%</button></div>`:'')+
  `<small style="color:var(--dim)">السحب: يفتح عند مستوى 3، ومساهمة 3,000 على الأقل، ومرة كل 24 ساعة، وبحد 10% من الخزينة. الضريبة تنقص من أرباح الأعضاء وتروح للخزينة، وأقصاها ${ALLY_MAXTAX}%.</small>`}
 function flagPoints(){const P=[];(S.cp||[]).forEach((p,i)=>P.push({id:'c'+i,x:p[0],z:p[1]}));(S.nodes||[]).forEach((n,i)=>{if(n.on)P.push({id:'n'+i,x:n.x,z:n.z})});
  Object.keys(FLG).forEach(k=>{if(k[0]==='p'&&FLG[k]&&FLG[k].x!==undefined&&!(FLG[k].end>Date.now()))P.push({id:k,x:FLG[k].x,z:FLG[k].z})});return P}
-function flagSet(id){if(!db||!S.ally)return;if(!['leader','officer'].includes(myRole())){toast('وضع الأعلام للزعيم والضباط فقط','bad');return}db.collection('flags').doc(id).set({owner:S.ally,name:(S.allyInfo&&S.allyInfo.name)||'تحالف',t:Date.now()}).catch(()=>{})}
+function flagSet(id){if(!db||!S.ally)return;if(!['leader','officer'].includes(myRole())){toast('وضع الأعلام للزعيم والضباط فقط','bad');return}
+ const p=flagPoints().find(q=>q.id===id);if(p){const r=terrCheck(p.x,p.z,FLAG_R,id,true);if(r){toast(r==='nofort'?'ما انحط علم — لازم حصن التحالف أول 🏰':'ما انحط علم — الموقع خارج أرض تحالفكم','bad');return}}
+ db.collection('flags').doc(id).set({owner:S.ally,name:(S.allyInfo&&S.allyInfo.name)||'تحالف',t:Date.now()}).catch(()=>{})}
 function allyCol(s){return (hsh(s)&0xffffff)|0x505050}
 function rebuildFlags(){if(!R3||!SC)return;if(!flagGrp){flagGrp=new THREE.Group();SC.add(flagGrp)}
- const pts=flagPoints(),sig=pts.map(p=>p.id+(FLG[p.id]?FLG[p.id].owner:'')).join(',');if(sig===flagSig)return;flagSig=sig;
+ const A=allAnchors(),C=connSet(A),sig=A.map(a=>a.id+a.o+(C.has(a.id)?1:0)).join(',');if(sig===flagSig)return;flagSig=sig;
  while(flagGrp.children.length){const c=flagGrp.children.pop();c.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material&&o.material.map)o.material.map.dispose()})}
- pts.forEach(p=>{const f=FLG[p.id];if(!f||!f.owner||Date.now()-(f.t||0)>=FLAG_TTL||(f.done||0)>Date.now())return;const g=new THREE.Group();g.position.set(p.x,tH(p.x,p.z),p.z);
-  const pole=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,7,6),M3(0xdddddd));pole.position.y=3.5;g.add(pole);
-  const cl=new THREE.Mesh(new THREE.PlaneGeometry(2.6,1.5).translate(1.3,0,0),new THREE.MeshBasicMaterial({color:allyCol(f.owner),side:THREE.DoubleSide}));cl.position.set(0,6,0);g.add(cl);
-  const l=lab3(f.name||'تحالف',300,64);l.scale.set(5,1.1,1);l.position.set(0,8.3,0);g.add(l);
-  const area=new THREE.Mesh(new THREE.CircleGeometry(70,48),new THREE.MeshBasicMaterial({color:allyCol(f.owner),transparent:true,opacity:.28,depthWrite:false,side:THREE.DoubleSide}));area.rotation.x=-Math.PI/2;area.position.y=.3;g.add(area);
-  const edge=new THREE.Mesh(new THREE.RingGeometry(68,71,64),new THREE.MeshBasicMaterial({color:allyCol(f.owner),transparent:true,opacity:.9,depthWrite:false,side:THREE.DoubleSide}));edge.rotation.x=-Math.PI/2;edge.position.y=.32;g.add(edge);
+ A.forEach(a=>{const f=FLG[a.id],on=C.has(a.id),col=allyCol(a.o),g=new THREE.Group();g.position.set(a.x,tH(a.x,a.z),a.z);
+  if(a.fort){
+   const base=new THREE.Mesh(new THREE.CylinderGeometry(5.5,6.5,6,10),M3(0x8a8f99));base.position.y=3;g.add(base);
+   const keep=new THREE.Mesh(new THREE.BoxGeometry(5,8,5),M3(0x5a606b));keep.position.y=10;g.add(keep);
+   [[-5,-5],[5,-5],[-5,5],[5,5]].forEach(q=>{const t=new THREE.Mesh(new THREE.CylinderGeometry(1.4,1.6,10,8),M3(0x737984));t.position.set(q[0],5,q[1]);g.add(t);const tc=new THREE.Mesh(new THREE.ConeGeometry(1.9,2.4,8),M3(col));tc.position.set(q[0],11.2,q[1]);g.add(tc)});
+   const roof=new THREE.Mesh(new THREE.ConeGeometry(4.2,4.5,4),M3(col));roof.position.y=16.2;roof.rotation.y=Math.PI/4;g.add(roof);
+   const pole=new THREE.Mesh(new THREE.CylinderGeometry(.14,.14,6,6),M3(0xdddddd));pole.position.y=21;g.add(pole);
+   const cl=new THREE.Mesh(new THREE.PlaneGeometry(3.4,2).translate(1.7,0,0),new THREE.MeshBasicMaterial({color:col,side:THREE.DoubleSide}));cl.position.set(0,22.5,0);g.add(cl);
+   const l=lab3('🏰 حصن '+(f.name||'تحالف'),340,64);l.scale.set(8,1.5,1);l.position.set(0,27,0);g.add(l)}
+  else{
+   const pole=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,7,6),M3(0xdddddd));pole.position.y=3.5;g.add(pole);
+   const cl=new THREE.Mesh(new THREE.PlaneGeometry(2.6,1.5).translate(1.3,0,0),new THREE.MeshBasicMaterial({color:col,side:THREE.DoubleSide,transparent:!on,opacity:on?1:.45}));cl.position.set(0,6,0);g.add(cl);
+   const l=lab3((on?'':'⚠️ ')+(f.name||'تحالف'),300,64);l.scale.set(5,1.1,1);l.position.set(0,8.3,0);g.add(l)}
+  const area=new THREE.Mesh(new THREE.CircleGeometry(a.r,48),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:on?.28:.07,depthWrite:false,side:THREE.DoubleSide}));area.rotation.x=-Math.PI/2;area.position.y=.3;g.add(area);
+  const edge=new THREE.Mesh(new THREE.RingGeometry(a.r-2,a.r+1,64),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:on?.9:.3,depthWrite:false,side:THREE.DoubleSide}));edge.rotation.x=-Math.PI/2;edge.position.y=.32;g.add(edge);
   flagGrp.add(g)})}
 function ctrlTick(){if(!db)return;const total=flagPoints().length||1,cnt={},nm={};
- Object.values(FLG).forEach(f=>{if(f&&f.owner&&Date.now()-(f.t||0)<FLAG_TTL&&(f.done||0)<=Date.now()){cnt[f.owner]=(cnt[f.owner]||0)+1;nm[f.owner]=f.name}});
+ {const A=allAnchors(),C=connSet(A);A.forEach(x=>{if(x.fort||!C.has(x.id))return;cnt[x.o]=(cnt[x.o]||0)+1;nm[x.o]=FLG[x.id].name})}
  let top=null,n=0;for(const k in cnt)if(cnt[k]>n){n=cnt[k];top=k}
  const share=n/total;
  if(CTRL&&CTRL.owner&&(top!==CTRL.owner||share<.6)){db.collection('config').doc('control').set({}).catch(()=>{});return}
@@ -482,23 +493,67 @@ function ctrlTick(){if(!db)return;const total=flagPoints().length||1,cnt={},nm={
 function flagTick(){try{rebuildFlags();ctrlTick()}catch(e){}}
 /* تكلفة العلم تتصاعد: 1M ثم 2M ثم 5M ثم تتضاعف */
 function flagCost(n){const T=[1e6,2e6,5e6,1e7,2e7,5e7];return n<T.length?T[n]:T[T.length-1]*Math.pow(2,n-T.length+1)}
+/* ===== نظام حصن التحالف (مثل رايز أوف كينغدمز): الحصن أولاً، ثم الأعلام تتوسّع بجواره ===== */
+const FORT_R=110,FLAG_R=70,FORT_DUR=72e5,FORT_COST={g:1e6,w:2e5,s:2e5};
+const fLive=f=>!!(f&&f.owner&&(f.kind==='fort'||Date.now()-(f.t||0)<FLAG_TTL));
+const fDone=f=>(f.done||0)<=Date.now();
+function allyAlive(o){return(typeof loadedA!=='undefined'&&loadedA)?!!(allies||[]).find(a=>a.id===o):true}
+function myFort(o){const k=Object.keys(FLG).find(k=>FLG[k]&&FLG[k].kind==='fort'&&FLG[k].owner===o&&allyAlive(o));return k?Object.assign({id:k},FLG[k]):null}
+function allAnchors(){const A=[];
+ Object.keys(FLG).forEach(k=>{const f=FLG[k];if(f&&f.kind==='fort'&&fLive(f)&&fDone(f)&&f.x!==undefined&&allyAlive(f.owner))A.push({id:k,x:f.x,z:f.z,o:f.owner,r:FORT_R,fort:1})});
+ flagPoints().forEach(p=>{const f=FLG[p.id];if(f&&f.kind!=='fort'&&fLive(f)&&fDone(f))A.push({id:p.id,x:p.x,z:p.z,o:f.owner,r:FLAG_R})});
+ return A}
+/* الأعلام المتصلة بالحصن عبر سلسلة متلامسة فقط هي الفعّالة */
+function connSet(A){const ok=new Set(),by={};A.forEach(a=>{(by[a.o]=by[a.o]||[]).push(a)});
+ for(const o in by){const list=by[o],q=list.filter(a=>a.fort);q.forEach(a=>ok.add(a.id));
+  while(q.length){const c=q.pop();list.forEach(b=>{if(!ok.has(b.id)&&Math.hypot(b.x-c.x,b.z-c.z)<=c.r+b.r){ok.add(b.id);q.push(b)}})}}
+ return ok}
+function terrCheck(x,z,r,selfId,skipRival){const A=allAnchors(),C=connSet(A),me=S.ally;
+ if(!A.some(a=>a.o===me&&a.fort))return'nofort';
+ if(!A.some(a=>a.o===me&&C.has(a.id)&&Math.hypot(a.x-x,a.z-z)<=a.r+r))return'far';
+ if(!skipRival&&A.some(a=>a.o!==me&&a.id!==selfId&&Math.hypot(a.x-x,a.z-z)<a.r+r))return'rival';
+ return''}
+function terrOK(r){if(!r)return true;
+ if(r==='nofort'){const f=myFort(S.ally);toast(f?'الحصن لسا قيد البناء — انتظروا يخلص أو ساعدوا فيه 🔨':'لازم تبنون حصن التحالف 🏰 قبل الأعلام','bad')}
+ else if(r==='far')toast('العلم لازم يُبنى بجوار الحصن أو علم متصل — وسّعوا الأرض خطوة خطوة 🚩','bad');
+ else toast('قريب من أرض تحالف ثاني — ما يُبنى هنا','bad');
+ return false}
+function myFlagCount(){return Object.keys(FLG).filter(k=>{const f=FLG[k];return f&&f.owner===S.ally&&f.kind!=='fort'&&fLive(f)}).length}
+function buildFort(x,z){const a=allyData();if(!a||!db)return;
+ if(!['leader','officer'].includes(myRole())){toast('بناء الحصن للزعيم والضباط فقط','bad');return}
+ if(myFort(S.ally)){toast('تحالفكم عنده حصن بالفعل','bad');return}
+ if(allAnchors().some(o=>o.o!==S.ally&&Math.hypot(o.x-x,o.z-z)<o.r+FORT_R)){toast('قريب من أرض تحالف ثاني — ما يُبنى هنا','bad');return}
+ const t=Object.assign({g:0,w:0,s:0},a.treasury||{});
+ if((t.g||0)<FORT_COST.g||(t.w||0)<FORT_COST.w||(t.s||0)<FORT_COST.s){toast('الخزينة تحتاج '+fmt(FORT_COST.g)+' 🪙 و '+fmt(FORT_COST.w)+' 🪵 و '+fmt(FORT_COST.s)+' 🪨','bad');return}
+ const now=Date.now();t.g-=FORT_COST.g;t.w-=FORT_COST.w;t.s-=FORT_COST.s;saveAlly(a,{treasury:t});
+ db.collection('flags').doc('f'+now.toString(36)).set({kind:'fort',owner:S.ally,name:a.name,t:now,x,z,done:now+FORT_DUR,hl:[]}).catch(()=>toast('تعذّر بناء الحصن','bad'));
+ toast('🏰 بدأ بناء حصن التحالف — يخلص بعد '+msT(FORT_DUR)+' أو ساعدوا فيه','good')}
+function fortDemolish(id){if(myRole()!=='leader'||!db)return;const f=FLG[id];if(!f||f.owner!==S.ally)return;
+ if(!confirm('هدم الحصن؟ كل أعلام التحالف تنقطع وتتعطّل، وما يرجع شي من التكلفة.'))return;
+ db.collection('flags').doc(id).set({kind:'fort',owner:'',t:0}).then(()=>toast('🏚️ تم هدم الحصن','good')).catch(()=>toast('تعذّر الهدم','bad'))}
+function fortHTML(){const f=myFort(S.ally);
+ if(!f)return card('🏰','حصن التحالف','لم يُبنَ بعد — هو قلب أرض التحالف ولازم يُبنى قبل أي علم. الزعيم أو الضابط يضغط على أرض فاضية في الخريطة. التكلفة من الخزينة: '+fmt(FORT_COST.g)+' 🪙 + '+fmt(FORT_COST.w)+' 🪵 + '+fmt(FORT_COST.s)+' 🪨','','--rc:#f2bd52');
+ if(!fDone(f))return'';
+ const A=allAnchors(),C=connSet(A),n=A.filter(x=>x.o===S.ally&&!x.fort&&C.has(x.id)).length,off=A.filter(x=>x.o===S.ally&&!x.fort&&!C.has(x.id)).length;
+ return card('🏰','حصن التحالف','أعلام متصلة: '+n+(off?' · منقطعة: '+off:'')+' — الأعلام تُبنى بجوار الحصن أو علم متصل فتتوسّع الأرض',myRole()==='leader'?'<button class="bt r s" data-fd="'+f.id+'">هدم</button>':'','--rc:#f2bd52')}
 function groundTap(px,py){if(!R3||!RC||!TILE.grp||!allyData()||!['leader','officer'].includes(myRole()))return;
  RC.setFromCamera(new THREE.Vector2(px/W_*2-1,-(py/H_)*2+1),CAM);const hs=RC.intersectObject(TILE.grp,true);if(!hs.length)return;
  const p=hs[0].point;if(p.y<WL+.5||Math.hypot(p.x,p.z)<60)return;
- tipOn(p.x,p.y+6,p.z,'أرض فاضية','ابنِ علم تحالفك هنا','🚩 ابنِ علم',()=>buildFlag(p.x,p.z))}
+ if(!myFort(S.ally))return tipOn(p.x,p.y+6,p.z,'أرض فاضية','حصن التحالف: '+fmt(FORT_COST.g)+' 🪙 + '+fmt(FORT_COST.w)+' 🪵 + '+fmt(FORT_COST.s)+' 🪨 من الخزينة','🏰 ابنِ حصن التحالف',()=>buildFort(p.x,p.z));
+ tipOn(p.x,p.y+6,p.z,'أرض فاضية','ابنِ علم تحالفك بجوار أرضكم','🚩 ابنِ علم',()=>buildFlag(p.x,p.z))}
 function buildFlag(x,z){const a=allyData();if(!a||!db)return;
  if(!['leader','officer'].includes(myRole())){toast('البناء للزعيم والضباط فقط','bad');return}
- if(flagPoints().some(p=>FLG[p.id]&&FLG[p.id].owner&&FLG[p.id].owner!==S.ally&&Math.hypot(p.x-x,p.z-z)<140)){toast('قريب من موقع تحالف ثاني — ما يُبنى هنا','bad');return}
- const mine=Object.values(FLG).filter(f=>f&&f.owner===S.ally).length,cost=flagCost(mine);
+ if(!terrOK(terrCheck(x,z,FLAG_R,'',false)))return;
+ const mine=myFlagCount(),cost=flagCost(mine);
  const t=Object.assign({g:0,w:0,s:0},a.treasury||{});if((t.g||0)<cost){toast('الخزينة تحتاج '+fmt(cost)+' 🪙','bad');return}
  const now=Date.now(),dur=Math.min(4*36e5,(mine+1)*18e5);
  t.g-=cost;saveAlly(a,{treasury:t});
  db.collection('flags').doc('p'+now.toString(36)).set({owner:S.ally,name:a.name,t:now,x,z,done:now+dur,hl:[]}).catch(()=>toast('تعذّر البناء','bad'));
  toast('🚩 بدأ بناء العلم — يخلص بعد '+msT(dur)+' أو ساعدوا فيه','good')}
 function flagHelp(id){const f=FLG[id];if(!f||!db||f.owner!==S.ally||(f.done||0)<=Date.now()){toast('ما يحتاج مساعدة','bad');return}
- const hl=f.hl||[];if(hl.includes(uid)){toast('ساعدت فيه مسبقاً','bad');return}if(hl.length>=3){toast('وصل حد المساعدين (3)','bad');return}
+ const hl=f.hl||[];if(hl.includes(uid)){toast('ساعدت فيه مسبقاً','bad');return}const mx=f.kind==='fort'?6:3;if(hl.length>=mx){toast('وصل حد المساعدين ('+mx+')','bad');return}
  db.collection('flags').doc(id).set(Object.assign({},f,{done:f.done-6e5,hl:[...hl,uid]})).then(()=>toast('🔨 تخفّف وقت البناء 10 دقائق','good')).catch(()=>toast('تعذّر المساعدة','bad'))}
-function flagBuildingHTML(){return Object.keys(FLG).filter(k=>FLG[k]&&FLG[k].owner===S.ally&&(FLG[k].done||0)>Date.now()).map(k=>card('🔨','علم قيد البناء',`متبقي ${msT(FLG[k].done-Date.now())} · مساعدين ${(FLG[k].hl||[]).length}/3`,`<button class="bt j s" data-fh="${k}">🔨 ساعد</button>`)).join('')}
+function flagBuildingHTML(){return Object.keys(FLG).filter(k=>FLG[k]&&FLG[k].owner===S.ally&&(FLG[k].done||0)>Date.now()).map(k=>{const f=FLG[k],mx=f.kind==='fort'?6:3;return card(f.kind==='fort'?'🏗️':'🔨',f.kind==='fort'?'حصن التحالف قيد البناء':'علم قيد البناء','متبقي '+msT(f.done-Date.now())+' · مساعدين '+(f.hl||[]).length+'/'+mx,'<button class="bt j s" data-fh="'+k+'">🔨 ساعد</button>')}).join('')}
 function ctrlLine(){if(!CTRL||!CTRL.owner)return'<small style="color:var(--dim)">لا يسيطر أحد على العالم بعد — التحالف الذي يملك 60% من النقاط ويحافظ عليها 24 ساعة يسيطر.</small>';
  const full=Date.now()-CTRL.since>=864e5;
  return `<div class="card rar" style="--rc:#f2bd52"><div class="g"><b>👑 يسيطر عليه: ${esc(CTRL.name)}</b><small>${full?'سيطرة مكتملة (24 ساعة)':'يحافظ على السيطرة'}</small></div></div>`}
@@ -640,7 +695,8 @@ function consumeTp(m){if(m==='free')S.tpFreeAt=Date.now();else{S.gold-=TP_ALLY_C
 function placeFlag(id){const a=allyData();if(!a){toast('انضم لتحالف أولاً','bad');return}
  if(!['leader','officer'].includes(myRole())){toast('وضع الأعلام للزعيم والضباط فقط','bad');return}
  const f=FLG[id];if(f&&f.owner&&f.owner!==S.ally&&Date.now()-(f.t||0)<FLAG_TTL){toast('هذا الموقع تحت سيطرة تحالف ثاني — اكسبه بالهجوم أولاً','bad');return}
- const cost=flagCost(Object.values(FLG).filter(f=>f&&f.owner===S.ally).length),t=Object.assign({g:0,w:0,s:0},a.treasury||{});if((t.g||0)<cost){toast('الخزينة تحتاج '+fmt(cost)+' 🪙','bad');return}
+ const p=flagPoints().find(q=>q.id===id);if(p&&!terrOK(terrCheck(p.x,p.z,FLAG_R,id,false)))return;
+ const cost=flagCost(myFlagCount()),t=Object.assign({g:0,w:0,s:0},a.treasury||{});if((t.g||0)<cost){toast('الخزينة تحتاج '+fmt(cost)+' 🪙','bad');return}
  t.g-=cost;saveAlly(a,{treasury:t});flagSet(id);toast('🚩 تم وضع العلم (-'+fmt(cost)+' 🪙 من الخزينة)','good')}
 function launch(kind,param){if(S.march||battle){toast('⚔️ جيشك في مهمة حالياً','bad');return}const o=MK[kind](param);if(!o)return;
  if(kind==='pvp'){const f0=foes().find(x=>x.id===param);if(f0&&f0.ally&&S.ally&&f0.ally===S.ally){toast('🛡️ لا يمكنك مهاجمة عضو في تحالفك','bad');return}}
@@ -921,7 +977,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('button,#lvlBox')
  if(t.id==='updB'){if(UPD&&UPD.url){const w=window.open(UPD.url,'_blank');if(!w)location.href=UPD.url}return}if(t.id==='updX'){$('upd').hidden=true;return}
  if(d.hsk!==undefined){const [hid,sid]=d.hsk.split('|');S.hsk=S.hsk||{};if(sid)S.hsk[hid]=sid;else delete S.hsk[hid];if(HV3)HV3.id='';save();render();return}
  if(d.role){const [pid,r]=d.role.split('|');setRole(pid,r);return}
- if(d.fh){flagHelp(d.fh);return}
+ if(d.fh){flagHelp(d.fh);return}if(d.fd){fortDemolish(d.fd);return}
  if(d.ad){const x=d.ad;if(x==='g10000')allyDonate('gold','g',10000);else if(x==='w1000')allyDonate('wood','w',1000);else if(x==='s1000')allyDonate('stone','s',1000);else if(x==='cg')allyClaim('gold','g');else if(x==='cw')allyClaim('wood','w');else if(x==='cs')allyClaim('stone','s');else if(x==='tax:+')allySetTax(1);else if(x==='tax:-')allySetTax(-1);return}
  if(d.wchg){switchWorld();return}if(d.vid){vsrc(d.vid).then(src=>openWin('video',{id:d.vid,src}));return}
  if(d.fs){try{document.documentElement.requestFullscreen()}catch(e){toast('اضبط ملء الشاشة من إعدادات Median','bad')}return}if(t.id==='wx'||d.close){closeWin();return}if(t.id==='lvlBox'){openWin('name');return}if(t.id==='bAtk'){openWin('attack');return}if(d.w){if(d.w==='chat'&&cur==='chat'){closeWin();return}openWin(d.w);return}
